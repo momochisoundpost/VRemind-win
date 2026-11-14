@@ -1,0 +1,66 @@
+name: Windows ARM64 Build
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-arm64:
+    name: Build & Package VRemindWin (Windows 11 ARM64)
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9 SDK (ARM64)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Ensure Swift 6.0.3 & MSVC ARM64 Toolchain
+        shell: pwsh
+        run: |
+          .\scripts\install-toolchain.ps1 -Architecture arm64 -ConfirmDownload
+          .\scripts\check-toolchain.ps1 -Architecture arm64
+
+      - name: Run VRemindCoreCLI Swift Tests (ARM64)
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $vsInstallPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath
+          $vcvarsArm64 = Join-Path $vsInstallPath 'VC\Auxiliary\Build\vcvarsarm64.bat'
+          $vcvarsCross = Join-Path $vsInstallPath 'VC\Auxiliary\Build\vcvarsamd64_arm64.bat'
+          $vcvars = if (Test-Path $vcvarsArm64) { $vcvarsArm64 } else { $vcvarsCross }
+          $env:SDKROOT = [Environment]::GetEnvironmentVariable('SDKROOT', 'User')
+          if ([string]::IsNullOrWhiteSpace($env:SDKROOT)) {
+              $env:SDKROOT = [Environment]::GetEnvironmentVariable('SDKROOT', 'Machine')
+          }
+          $env:PATH = [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH', 'User')
+          cmd /c "call `"$vcvars`" && swift test --package-path VRemindCoreCLI -Xcc -D__MM_MALLOC_H"
+          if ($LASTEXITCODE -ne 0) { throw "swift test failed with exit code $LASTEXITCODE" }
+
+      - name: Run VRemindWin .NET Unit Tests
+        shell: pwsh
+        run: |
+          dotnet test .\VRemindWin\tests\VRemindWin.Tests\VRemindWin.Tests.csproj -c Release
+
+      - name: Build & Package VRemindWin (ARM64)
+        shell: pwsh
+        run: |
+          .\scripts\build-app.ps1 -Configuration Release -Architecture arm64
+          New-Item -ItemType Directory -Force -Path .\dist | Out-Null
+          Compress-Archive -Path .\dist\VRemindWin-arm64\* -DestinationPath .\dist\VRemindWin-arm64.zip -Force
+
+      - name: Upload VRemindWin-arm64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VRemindWin-arm64
+          path: dist/VRemindWin-arm64.zip
+          if-no-files-found: error

@@ -79,8 +79,12 @@ VRemind sits quietly in your Windows system tray (notification area), monitors y
 
 ### Option 1: Download Pre-built Release (Unpackaged Portable / Installer)
 
-1. Download `VRemindWin-x64.zip` from the Releases page.
+1. Download `VRemindWin-x64.zip` from the Releases page (or `VRemindWin-arm64.zip` for **Windows 11 on ARM64**).
 2. Extract the folder anywhere you like and run `VRemindWin.exe`.
+
+> [!TIP]
+> **Running Windows 11 on ARM64 (Snapdragon X, NVIDIA RTX Spark, or Apple Silicon VM)?**
+> We are looking for volunteers with Windows 11 ARM64 hardware or VMs to help test native `win-arm64` builds! Check out the [**Windows 11 on ARM64 Volunteer Testing & Build Guide**](docs/WINDOWS-ARM64.md) to grab the pre-built CI artifact or build natively from source. (Note: ARM64 builds require **Windows 11**; Windows 10 on ARM is not supported.)
 
 > [!NOTE]
 > **Windows SmartScreen Notice**: Just like we refused to pay John Apple $99/year in California, we aren't paying a certificate cartel $300/year in Seattle to sign a free open-source VTuber reminder. If Windows Defender SmartScreen says *"Windows protected your PC"*, click **More info** → **Run anyway**.
@@ -180,8 +184,9 @@ VRemind-win/
 
 ## Requirements
 
-- **Runtime OS**: Windows 10 version 1809 (build `17763`, Enterprise LTSC 2019) or newer, and Windows 11 (x64).
-- **Devbox / Contributor Build OS**: Windows 10 21H2 (build `19044`, IoT Enterprise LTSC 2021) or newer with `.NET 9 SDK`, `Visual Studio 2022 C++ Build Tools + Windows 10 SDK`, and `Swift for Windows`.
+- **Runtime OS (`x64`)**: Windows 10 version 1809 (build `17763`, Enterprise LTSC 2019) or newer, and Windows 11 (`x64`).
+- **Runtime OS (`ARM64`)**: **Windows 11 on ARM64** (Snapdragon X, NVIDIA RTX Spark, Apple Silicon VM). *Windows 10 on ARM is not supported.* See [docs/WINDOWS-ARM64.md](docs/WINDOWS-ARM64.md).
+- **Devbox / Contributor Build OS**: Windows 10 21H2 (build `19044`, IoT Enterprise LTSC 2021) or newer (`x64`), or Windows 11 (`ARM64`), with `.NET 9 SDK`, `Visual Studio 2022 C++ Build Tools + Windows 10/11 SDK`, and `Swift for Windows 6.0.3`.
 
 > [!NOTE]
 > **Windows 11 Widgets:** Windows 11 Desktop Widget Provider support is planned as a separate future milestone — the core system tray app, notifications, celebration mode, onboarding, backup/restore, and updater are already at 100% parity with macOS `VRemind` v1.3.1.

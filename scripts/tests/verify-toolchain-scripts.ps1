@@ -98,4 +98,28 @@ if ($buildAppText -notmatch '\$Architecture' -or $buildAppText -notmatch 'VRemin
     throw "build-app.ps1 must support -Architecture arm64 and dist\VRemindWin-arm64"
 }
 
+# 4. GitHub Actions ARM64 workflow and volunteer documentation must exist and reference Windows 11 ARM64
+$workflowPath = Join-Path $repoRoot '.github\workflows\windows-arm64.yml'
+if (-not (Test-Path -LiteralPath $workflowPath)) {
+    throw "Missing GitHub Actions workflow at $workflowPath"
+}
+$workflowText = Get-Content -LiteralPath $workflowPath -Raw
+if ($workflowText -notmatch 'windows-11-arm' -or $workflowText -notmatch '-Architecture arm64' -or $workflowText -notmatch 'VRemindWin-arm64\.zip') {
+    throw "windows-arm64.yml must run on windows-11-arm, invoke -Architecture arm64, and package VRemindWin-arm64.zip"
+}
+
+$armDocPath = Join-Path $repoRoot 'docs\WINDOWS-ARM64.md'
+if (-not (Test-Path -LiteralPath $armDocPath)) {
+    throw "Missing ARM64 volunteer guide at $armDocPath"
+}
+$armDocText = Get-Content -LiteralPath $armDocPath -Raw
+if ($armDocText -notmatch 'Windows 11' -or $armDocText -notmatch 'Windows 10' -or $armDocText -notmatch '-Architecture arm64') {
+    throw "docs\WINDOWS-ARM64.md must specify Windows 11 ARM64 requirement, Windows 10 ARM exclusion, and -Architecture arm64 build instructions"
+}
+
+$readmeText = Get-Content -LiteralPath (Join-Path $repoRoot 'README.md') -Raw
+if ($readmeText -notmatch 'docs/WINDOWS-ARM64\.md') {
+    throw "README.md must link to docs/WINDOWS-ARM64.md"
+}
+
 Write-Host "PASS: Toolchain scripts verified."
