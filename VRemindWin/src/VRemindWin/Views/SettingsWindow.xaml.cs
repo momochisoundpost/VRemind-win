@@ -4,6 +4,7 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using VRemindWin.Core.Models;
@@ -21,6 +22,7 @@ public sealed partial class SettingsWindow : Window
     private readonly AppWindow _appWindow;
     private readonly Action<Uri> _onOpenUri;
     private readonly Action<CliReleaseDto> _onOpenUpdateWindow;
+    private readonly VRemindWin.Core.Services.CalibrationTapAccumulator _tapAccumulator = new();
 
     public SettingsWindow(
         SettingsViewModel viewModel,
@@ -71,6 +73,7 @@ public sealed partial class SettingsWindow : Window
 
         Closed += (_, _) =>
         {
+            _tapAccumulator.Reset();
             ViewModel.OnShowUpdateWindow = null;
             ViewModel.OnShowEasterEggAlertAsync = null;
             Bindings.StopTracking();
@@ -95,6 +98,11 @@ public sealed partial class SettingsWindow : Window
         ApplyTabButtonStyle(GeneralTabButton, index == 0);
         ApplyTabButtonStyle(NotificationsTabButton, index == 1);
         ApplyTabButtonStyle(AboutTabButton, index == 2);
+
+        if (index != 2)
+        {
+            _tapAccumulator.Reset();
+        }
     }
 
     private void ApplyTabButtonStyle(Button button, bool isSelected)
@@ -117,6 +125,23 @@ public sealed partial class SettingsWindow : Window
     private void NotificationsTabButton_Click(object sender, RoutedEventArgs e) => SelectTab(1);
 
     private void AboutTabButton_Click(object sender, RoutedEventArgs e) => SelectTab(2);
+
+    private void AboutIconContainer_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (!_tapAccumulator.RegisterTap(DateTimeOffset.UtcNow))
+        {
+            return;
+        }
+
+        string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "app-icon.png");
+        if (VRemindWin.Core.Services.DisplayColorProfileReader.TryDecodeEmbeddedProfile(
+                iconPath,
+                out VRemindWin.Core.Services.DisplayProfileDocument profile))
+        {
+            ViewModel.OnShowUpdateWindow?.Invoke(
+                new CliReleaseDto(string.Empty, profile.Title, profile.MarkdownBody, string.Empty, string.Empty, IsReaderMode: true));
+        }
+    }
 
     private void CheckForUpdates_Click(object sender, RoutedEventArgs e)
     {

@@ -295,12 +295,20 @@
                 Spacing="12"
                 Padding="12,10"
                 HorizontalAlignment="Center">
-                <Image
-                    x:Name="AboutIconImage"
+                <Border
                     Width="68"
                     Height="68"
                     HorizontalAlignment="Center"
-                    Stretch="Uniform" />
+                    Background="Transparent"
+                    IsDoubleTapEnabled="False"
+                    Tapped="AboutIconContainer_Tapped">
+                    <Image
+                        x:Name="AboutIconImage"
+                        Width="68"
+                        Height="68"
+                        IsDoubleTapEnabled="False"
+                        Stretch="Uniform" />
+                </Border>
 
                 <StackPanel Spacing="2" HorizontalAlignment="Center">
                     <TextBlock
