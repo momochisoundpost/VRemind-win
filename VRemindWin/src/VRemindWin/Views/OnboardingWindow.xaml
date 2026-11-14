@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="VRemindWin.Views.OnboardingWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:VRemindWin.Helpers"
+    Title="Welcome to VRemind">
+
+    <Grid
+        Padding="24,20"
+        RowSpacing="14"
+        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Spacing="6" HorizontalAlignment="Center">
+            <Image
+                x:Name="AppIconImage"
+                Width="56"
+                Height="56"
+                HorizontalAlignment="Center"
+                Stretch="Uniform" />
+            <TextBlock
+                Text="Welcome to VRemind"
+                FontSize="18"
+                FontWeight="Bold"
+                HorizontalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+            <TextBlock
+                Text="Never miss a VTuber or creator stream from your Windows system tray."
+                FontSize="12"
+                TextAlignment="Center"
+                TextWrapping="Wrap"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+
+        <!-- Steps -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="12">
+                <!-- Step 1: First Channel -->
+                <Border
+                    Padding="14,12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Text="1. Start Your Watchlist"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                        <TextBlock
+                            Text="Pre-filled with Caitlyn Momochi (@bukancaitlyn). Keep it, change it to your favorite creator, or clear it to start empty."
+                            FontSize="11.5"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <ComboBox
+                                x:Name="PlatformComboBox"
+                                Grid.Column="0"
+                                MinWidth="108"
+                                SelectedIndex="0"
+                                SelectionChanged="PlatformComboBox_SelectionChanged">
+                                <ComboBoxItem Tag="youtube">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="7" Height="7" Fill="#FFFF0000" />
+                                        <TextBlock Text="YouTube" FontSize="12" />
+                                    </StackPanel>
+                                </ComboBoxItem>
+                                <ComboBoxItem Tag="twitch">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="7" Height="7" Fill="#FF9146FF" />
+                                        <TextBlock Text="Twitch" FontSize="12" />
+                                    </StackPanel>
+                                </ComboBoxItem>
+                            </ComboBox>
+
+                            <TextBox
+                                Grid.Column="1"
+                                PlaceholderText="{x:Bind ViewModel.InputPlaceholder, Mode=OneWay}"
+                                Text="{x:Bind ViewModel.CustomHandle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </Grid>
+
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ValidationError, Mode=OneWay}"
+                            Visibility="{x:Bind helpers:UiBindingHelpers.ToVisibility(ViewModel.HasValidationError), Mode=OneWay}"
+                            FontSize="11.5"
+                            TextWrapping="Wrap"
+                            Foreground="#FFEF4444" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Step 2: Test Notifications -->
+                <Border
+                    Padding="14,12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Text="2. Verify Windows Toast Notifications"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                        <TextBlock
+                            Text="Send a quick test alert to make sure Windows Focus Assist isn't hiding VRemind notifications."
+                            FontSize="11.5"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button
+                                Content="Send Test Notification"
+                                Click="SendTestNotification_Click" />
+                            <TextBlock
+                                Text="✓ Sent!"
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Foreground="#FF22C55E"
+                                Visibility="{x:Bind helpers:UiBindingHelpers.ToVisibility(ViewModel.HasSentTestNotification), Mode=OneWay}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Step 3: Update Consent -->
+                <Border
+                    Padding="14,12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            Text="3. Software Updates"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+
+                        <CheckBox
+                            Content="Automatically check GitHub for VRemind updates"
+                            IsChecked="{x:Bind ViewModel.EnableUpdateChecks, Mode=TwoWay}" />
+
+                        <CheckBox
+                            Content="Never ask about updates again"
+                            IsChecked="{x:Bind ViewModel.NeverAskUpdatesAgain, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Button
+            Grid.Row="2"
+            HorizontalAlignment="Stretch"
+            Padding="12,8"
+            Content="Get Started"
+            FontWeight="SemiBold"
+            Style="{ThemeResource AccentButtonStyle}"
+            Click="GetStarted_Click" />
+    </Grid>
+</Window>

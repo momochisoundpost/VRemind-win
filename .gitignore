@@ -1,0 +1,32 @@
+# Visual Studio / .NET / WinUI 3
+.vs/
+**/bin/
+**/obj/
+TestResults/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.nupkg
+*.msix
+*.appx
+*.cer
+
+# Swift Package Manager
+**/.build/
+**/.swiftpm/
+
+# Staged CLI binaries & packaged app bundles
+artifacts/
+dist/
+*.zip
+
+# Local macOS reference repository & scratch tooling
+VRemind/
+.superpowers/
+
+# OS files & local runtime logs
+.DS_Store
+Thumbs.db
+*.log

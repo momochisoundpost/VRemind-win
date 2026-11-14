@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="VRemindWin.Views.SettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:VRemindWin.Helpers"
+    Title="VRemind Settings">
+
+    <Grid
+        x:Name="RootGrid"
+        Padding="18,14"
+        RowSpacing="12"
+        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+        <Grid.Resources>
+            <Style x:Key="UnselectedTabButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="MinWidth" Value="112" />
+                <Setter Property="Padding" Value="12,5" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+            <Style x:Key="SelectedTabButtonStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+                <Setter Property="MinWidth" Value="112" />
+                <Setter Property="Padding" Value="12,5" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Segmented 3-Tab Bar -->
+        <Border
+            Grid.Row="0"
+            Padding="4"
+            CornerRadius="8"
+            HorizontalAlignment="Center"
+            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <Button
+                    x:Name="GeneralTabButton"
+                    Style="{StaticResource SelectedTabButtonStyle}"
+                    Click="GeneralTabButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE713;" FontSize="12" />
+                        <TextBlock Text="General" FontSize="12.5" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Button>
+
+                <Button
+                    x:Name="NotificationsTabButton"
+                    Style="{StaticResource UnselectedTabButtonStyle}"
+                    Click="NotificationsTabButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEA8F;" FontSize="12" />
+                        <TextBlock Text="Notifications" FontSize="12.5" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Button>
+
+                <Button
+                    x:Name="AboutTabButton"
+                    Style="{StaticResource UnselectedTabButtonStyle}"
+                    Click="AboutTabButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE946;" FontSize="12" />
+                        <TextBlock Text="About" FontSize="12.5" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Tab 1: General -->
+        <ScrollViewer
+            x:Name="GeneralTabScroll"
+            Grid.Row="1"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="12" Padding="2,0,6,8">
+                <!-- Startup & Motion -->
+                <Border
+                    Padding="14,12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            Text="Startup &amp; Appearance"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+
+                        <CheckBox
+                            Content="Launch VRemind at Windows login"
+                            IsChecked="{x:Bind ViewModel.LaunchAtLogin, Mode=TwoWay}" />
+
+                        <CheckBox
+                            Content="Reduce motion (disable confetti rain &amp; slow rainbow accents)"
+                            IsChecked="{x:Bind ViewModel.ReduceMotion, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Software Updates -->
+                <Border
+                    Padding="14,12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                Text="Updates"
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{x:Bind ViewModel.CurrentVersionText, Mode=OneWay}"
+                                FontSize="11.5"
+                                VerticalAlignment="Center"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </Grid>
+
+                        <CheckBox
+                            Content="Automatically check for updates on startup"
+                            IsChecked="{x:Bind ViewModel.IsAutoUpdateEnabled, Mode=TwoWay}" />
+
+                        <Button
+                            Content="Check for Updates Now"
+                            HorizontalAlignment="Left"
+                            IsEnabled="{x:Bind helpers:UiBindingHelpers.Negate(ViewModel.IsCheckingUpdates), Mode=OneWay}"
+                            Click="CheckForUpdates_Click" />
+
+                        <TextBlock
+                            Text="{x:Bind ViewModel.UpdateStatusText, Mode=OneWay}"
+                            Visibility="{x:Bind helpers:UiBindingHelpers.ToVisibility(ViewModel.HasUpdateStatusText), Mode=OneWay}"
+                            FontSize="11.5"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Data & Backup -->
+                <Border
+                    Padding="14,12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Text="Data &amp; Backup"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+
+                        <TextBlock
+                            Text="Export or restore your watchlist and settings as a portable JSON file compatible across macOS and Windows."
+                            FontSize="11.5"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button
+                                Content="Export Backup..."
+                                Click="ExportBackup_Click" />
+                            <Button
+                                Content="Restore Backup..."
+                                Click="RestoreBackup_Click" />
+                        </StackPanel>
+
+                        <TextBlock
+                            Text="{x:Bind ViewModel.BackupStatusText, Mode=OneWay}"
+                            Visibility="{x:Bind helpers:UiBindingHelpers.ToVisibility(ViewModel.HasBackupStatusText), Mode=OneWay}"
+                            FontSize="11.5"
+                            TextWrapping="Wrap"
+                            Foreground="#FF22C55E" />
+
+                        <TextBlock
+                            Text="{x:Bind ViewModel.BackupErrorMessage, Mode=OneWay}"
+                            Visibility="{x:Bind helpers:UiBindingHelpers.ToVisibility(ViewModel.HasBackupError), Mode=OneWay}"
+                            FontSize="11.5"
+                            TextWrapping="Wrap"
+                            Foreground="#FFEF4444" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Danger Zone -->
+                <Border
+                    Padding="14,12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="#55EF4444"
+                    BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Text="Danger Zone"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="#FFEF4444" />
+
+                        <Button
+                            Content="Reset All Data to Factory Defaults..."
+                            Foreground="#FFEF4444"
+                            Click="FactoryReset_Click" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Tab 2: Notifications -->
+        <ScrollViewer
+            x:Name="NotificationsTabScroll"
+            Grid.Row="1"
+            Visibility="Collapsed"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="12" Padding="2,0,6,8">
+                <Border
+                    Padding="14,12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            Text="Stream Alerts"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+
+                        <CheckBox
+                            Content="Notify when a watched channel goes live"
+                            IsChecked="{x:Bind ViewModel.NotifyOnLive, Mode=TwoWay}" />
+
+                        <CheckBox
+                            Content="Notify about upcoming scheduled streams"
+                            IsChecked="{x:Bind ViewModel.NotifyOnUpcoming, Mode=TwoWay}" />
+
+                        <CheckBox
+                            Content="Play notification sound"
+                            IsChecked="{x:Bind ViewModel.PlayNotificationSound, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    Padding="14,12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Text="Diagnostics &amp; Windows Settings"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+
+                        <TextBlock
+                            Text="If notifications do not appear, check Windows Focus Assist / Do Not Disturb settings."
+                            FontSize="11.5"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                        <StackPanel Spacing="8" HorizontalAlignment="Left">
+                            <Button
+                                Content="Send Test Notification"
+                                Click="SendTestNotification_Click" />
+                            <Button
+                                Content="Open Windows Notification Settings"
+                                Click="OpenWindowsNotificationSettings_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Tab 3: About -->
+        <ScrollViewer
+            x:Name="AboutTabScroll"
+            Grid.Row="1"
+            Visibility="Collapsed"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel
+                Spacing="12"
+                Padding="12,10"
+                HorizontalAlignment="Center">
+                <Image
+                    x:Name="AboutIconImage"
+                    Width="68"
+                    Height="68"
+                    HorizontalAlignment="Center"
+                    Stretch="Uniform" />
+
+                <StackPanel Spacing="2" HorizontalAlignment="Center">
+                    <TextBlock
+                        Text="VRemind"
+                        FontSize="18"
+                        FontWeight="Bold"
+                        HorizontalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.CurrentVersionText, Mode=OneWay}"
+                        FontSize="12"
+                        HorizontalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+
+                <Border
+                    Padding="16,12"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            x:Name="AttributionTextBlock"
+                            FontSize="12.5"
+                            FontWeight="Medium"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+
+                        <TextBlock
+                            x:Name="ForkCopyTextBlock"
+                            FontSize="11.5"
+                            FontStyle="Italic"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    HorizontalAlignment="Center">
+                    <Button
+                        Content="YouTube"
+                        Click="YoutubeButton_Click" />
+                    <Button
+                        Content="Twitter / X"
+                        Click="TwitterButton_Click" />
+                    <Button
+                        Content="GitHub"
+                        Click="GithubButton_Click" />
+                    <Button
+                        Content="Instagram"
+                        Click="InstagramButton_Click" />
+                </StackPanel>
+
+                <TextBlock
+                    Text="Watchlist &amp; settings stored in %APPDATA%\VRemind"
+                    FontSize="11"
+                    HorizontalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
