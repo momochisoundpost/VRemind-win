@@ -26,6 +26,10 @@ This project is built and vibecoded using **Google Antigravity** and **[Superpow
 
 ---
 
+<p align="center">
+  <img src="Screenshot.png" alt="VRemind Windows System Tray Popover" width="380">
+</p>
+
 VRemind sits quietly in your Windows system tray (notification area), monitors your favorite VTubers and content creators on **YouTube** and **Twitch**, alerts you with native Windows toast notifications the moment they go live or schedule an upcoming waiting room, and lets you jump straight into the stream with a single click.
 
 ---
