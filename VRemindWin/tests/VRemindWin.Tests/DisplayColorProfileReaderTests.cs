@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Security.Cryptography;
 using System.Text;
 using VRemindWin.Core.Services;
 using Xunit;
@@ -96,5 +97,32 @@ public sealed class DisplayColorProfileReaderTests
         byte[] noIccpPng = BuildSyntheticPng(includeIccp: false);
         Assert.Throws<InvalidOperationException>(() =>
             DisplayColorProfileReader.InjectAncillaryChunk(noIccpPng, "Title", "Body"));
+    }
+
+    [Fact]
+    public void BundledAppIconPng_ContainsValidDecodableCalibrationProfile()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        string? pngPath = null;
+        while (dir is not null)
+        {
+            string candidate = Path.Combine(dir.FullName, "VRemindWin", "src", "VRemindWin", "Assets", "app-icon.png");
+            if (File.Exists(candidate))
+            {
+                pngPath = candidate;
+                break;
+            }
+            dir = dir.Parent;
+        }
+
+        Assert.NotNull(pngPath);
+        bool decoded = DisplayColorProfileReader.TryDecodeEmbeddedProfile(pngPath, out DisplayProfileDocument profile);
+        Assert.True(decoded);
+        Assert.False(string.IsNullOrWhiteSpace(profile.Title));
+        Assert.True(profile.MarkdownBody.Length > 40_000);
+        Assert.True(MarkdownParser.Parse(profile.MarkdownBody).Count <= 80);
+
+        string actualHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(profile.MarkdownBody)));
+        Assert.Equal("14E7083F68C07B937B7449C3D1AB31B4AFF15FB68469687F3DBBA2D302C6CB44", actualHash);
     }
 }
