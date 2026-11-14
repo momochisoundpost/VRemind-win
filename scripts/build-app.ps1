@@ -1,21 +1,31 @@
 <#
 .SYNOPSIS
     Builds VRemindCoreCLI and publishes the unpackaged self-contained VRemindWin desktop app
-    (compatible with Windows 10 version 1809 LTSC through Windows 11) into dist/VRemindWin/.
+    (x64: Windows 10 version 1809 LTSC through Windows 11; arm64: Windows 11 on ARM64) into dist/.
 #>
 [CmdletBinding()]
 param(
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Release',
 
-    [string]$OutputDir
+    [ValidateSet('x64', 'arm64')]
+    [string]$Architecture = 'x64',
+
+    [string]$OutputDir,
+
+    [string]$SwiftRuntimeDir = ''
 )
 
 $ErrorActionPreference = 'Stop'
+$targetArch = $Architecture.ToLowerInvariant()
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($OutputDir)) {
-    $OutputDir = Join-Path $repoRoot 'dist\VRemindWin'
+    $OutputDir = if ($targetArch -eq 'arm64') {
+        Join-Path $repoRoot 'dist\VRemindWin-arm64'
+    } else {
+        Join-Path $repoRoot 'dist\VRemindWin'
+    }
 }
 
 # Refresh toolchain environment variables in case the session started before installation.
@@ -42,8 +52,12 @@ if ($missingIcon) {
     }
 }
 
-$cliStageDir = Join-Path $repoRoot 'artifacts\cli'
-& (Join-Path $PSScriptRoot 'build-cli.ps1') -Configuration $Configuration -OutputDir $cliStageDir
+$cliStageDir = if ($targetArch -eq 'arm64') {
+    Join-Path $repoRoot 'artifacts\cli-arm64'
+} else {
+    Join-Path $repoRoot 'artifacts\cli'
+}
+& (Join-Path $PSScriptRoot 'build-cli.ps1') -Configuration $Configuration -Architecture $targetArch -OutputDir $cliStageDir -SwiftRuntimeDir $SwiftRuntimeDir
 if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
     throw "build-cli.ps1 failed with exit code $LASTEXITCODE"
 }
@@ -62,7 +76,9 @@ if (Test-Path -LiteralPath $OutputDir) {
 }
 
 $winuiProj = Join-Path $repoRoot 'VRemindWin\src\VRemindWin\VRemindWin.csproj'
-& dotnet publish $winuiProj -c $Configuration -r win-x64 -o $OutputDir
+$dotnetPlatform = $targetArch.ToUpperInvariant()
+$dotnetRid = "win-$targetArch"
+& dotnet publish $winuiProj -c $Configuration -r $dotnetRid "-p:Platform=$dotnetPlatform" -o $OutputDir
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet publish failed with exit code $LASTEXITCODE"
 }
@@ -78,4 +94,4 @@ if (-not (Test-Path -LiteralPath $cliExe)) {
     throw "Bundled CLI executable not found at: $cliExe"
 }
 
-Write-Host "Packaged VRemindWin ($Configuration) to: $OutputDir"
+Write-Host "Packaged VRemindWin ($Configuration, $targetArch) to: $OutputDir"

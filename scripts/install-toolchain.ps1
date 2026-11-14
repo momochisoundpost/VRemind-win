@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$ConfirmDownload,
+    [ValidateSet('x64', 'arm64')]
+    [string]$Architecture = 'x64',
     [switch]$SkipDotNet,
     [switch]$SkipVsBuildTools,
     [switch]$SkipSwift,
@@ -9,20 +11,22 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
+$targetArch = $Architecture.ToLowerInvariant()
+$hostIsArm64 = ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') -or ($env:PROCESSOR_ARCHITEW6432 -eq 'ARM64')
 
 $checkScript = Join-Path $PSScriptRoot 'check-toolchain.ps1'
-$jsonRaw = & powershell -NoProfile -ExecutionPolicy Bypass -File $checkScript -Json
+$jsonRaw = & powershell -NoProfile -ExecutionPolicy Bypass -File $checkScript -Architecture $targetArch -Json
 $report = ($jsonRaw -join "`n") | ConvertFrom-Json
 
 if ($report.AllInstalled) {
-    Write-Host "All prerequisites are already installed. No downloads required." -ForegroundColor Green
+    Write-Host "All prerequisites ($targetArch) are already installed. No downloads required." -ForegroundColor Green
     exit 0
 }
 
 if (-not $ConfirmDownload) {
     Write-Warning "Metered connection guard: refusing to download missing packages (~$($report.EstimatedDownloadMB) MB)."
-    Write-Host "Run '.\scripts\check-toolchain.ps1' to inspect missing items, or re-run with -ConfirmDownload from an Administrator PowerShell:"
-    Write-Host "  powershell -ExecutionPolicy Bypass -File .\scripts\install-toolchain.ps1 -ConfirmDownload"
+    Write-Host "Run '.\scripts\check-toolchain.ps1 -Architecture $targetArch' to inspect missing items, or re-run with -ConfirmDownload from an Administrator PowerShell:"
+    Write-Host "  powershell -ExecutionPolicy Bypass -File .\scripts\install-toolchain.ps1 -Architecture $targetArch -ConfirmDownload"
     exit 2
 }
 
@@ -82,9 +86,10 @@ if (-not $SkipGit -and -not $report.Git.Installed) {
 
 # 2. .NET 9 SDK
 if (-not $SkipDotNet -and -not $report.DotNetSdk9.Installed) {
-    $dotnetInstaller = Join-Path $tempDir 'dotnet-sdk-win-x64.exe'
-    Invoke-FastDownload -Url 'https://aka.ms/dotnet/9.0/dotnet-sdk-win-x64.exe' -OutFile $dotnetInstaller -Label '.NET 9 SDK (x64)'
-    Write-Host "Installing .NET 9 SDK..." -ForegroundColor Cyan
+    $dotnetArch = if ($hostIsArm64) { 'arm64' } else { 'x64' }
+    $dotnetInstaller = Join-Path $tempDir "dotnet-sdk-win-$dotnetArch.exe"
+    Invoke-FastDownload -Url "https://aka.ms/dotnet/9.0/dotnet-sdk-win-$dotnetArch.exe" -OutFile $dotnetInstaller -Label ".NET 9 SDK ($dotnetArch)"
+    Write-Host "Installing .NET 9 SDK ($dotnetArch)..." -ForegroundColor Cyan
     $dotnetProc = Start-Process -FilePath $dotnetInstaller -ArgumentList '/install /quiet /norestart' -Wait -PassThru
     if ($dotnetProc.ExitCode -notin @(0, 3010)) {
         throw ".NET 9 SDK installer failed with exit code $($dotnetProc.ExitCode)"
@@ -101,6 +106,9 @@ if (-not $SkipVsBuildTools -and -not $report.VsCppAndWin10Sdk.Installed) {
         '--add', 'Microsoft.VisualStudio.Workload.VCTools',
         '--includeRecommended'
     )
+    if ($targetArch -eq 'arm64') {
+        $vsArgs += @('--add', 'Microsoft.VisualStudio.Component.VC.Tools.ARM64')
+    }
     $vsProc = Start-Process -FilePath $vsInstaller -ArgumentList $vsArgs -Wait -PassThru
     if ($vsProc.ExitCode -notin @(0, 3010)) {
         throw "VS Build Tools installer failed with exit code $($vsProc.ExitCode)"
@@ -109,9 +117,17 @@ if (-not $SkipVsBuildTools -and -not $report.VsCppAndWin10Sdk.Installed) {
 
 # 4. Swift for Windows
 if (-not $SkipSwift -and -not $report.SwiftWindows.Installed) {
-    $swiftInstaller = Join-Path $tempDir 'swift-6.0.3-RELEASE-windows10.exe'
-    Invoke-FastDownload -Url 'https://download.swift.org/swift-6.0.3-release/windows10/swift-6.0.3-RELEASE/swift-6.0.3-RELEASE-windows10.exe' -OutFile $swiftInstaller -Label 'Swift 6.0.3 for Windows x64'
-    Write-Host "Installing Swift 6.0.3 for Windows..." -ForegroundColor Cyan
+    if ($hostIsArm64) {
+        $swiftInstaller = Join-Path $tempDir 'swift-6.0.3-RELEASE-windows10-arm64.exe'
+        $swiftUrl = 'https://download.swift.org/swift-6.0.3-release/windows10-arm64/swift-6.0.3-RELEASE/swift-6.0.3-RELEASE-windows10-arm64.exe'
+        $swiftLabel = 'Swift 6.0.3 for Windows ARM64'
+    } else {
+        $swiftInstaller = Join-Path $tempDir 'swift-6.0.3-RELEASE-windows10.exe'
+        $swiftUrl = 'https://download.swift.org/swift-6.0.3-release/windows10/swift-6.0.3-RELEASE/swift-6.0.3-RELEASE-windows10.exe'
+        $swiftLabel = 'Swift 6.0.3 for Windows x64'
+    }
+    Invoke-FastDownload -Url $swiftUrl -OutFile $swiftInstaller -Label $swiftLabel
+    Write-Host "Installing $swiftLabel..." -ForegroundColor Cyan
     $swiftProc = Start-Process -FilePath $swiftInstaller -ArgumentList '/quiet' -Wait -PassThru
     if ($swiftProc.ExitCode -notin @(0, 3010)) {
         throw "Swift installer failed with exit code $($swiftProc.ExitCode)"
@@ -119,6 +135,6 @@ if (-not $SkipSwift -and -not $report.SwiftWindows.Installed) {
 }
 
 Write-Host ""
-Write-Host "Re-checking toolchain..." -ForegroundColor Cyan
-& powershell -NoProfile -ExecutionPolicy Bypass -File $checkScript
+Write-Host "Re-checking toolchain ($targetArch)..." -ForegroundColor Cyan
+& powershell -NoProfile -ExecutionPolicy Bypass -File $checkScript -Architecture $targetArch
 exit $LASTEXITCODE

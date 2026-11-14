@@ -1,9 +1,13 @@
 [CmdletBinding()]
 param(
-    [switch]$Json
+    [switch]$Json,
+
+    [ValidateSet('x64', 'arm64')]
+    [string]$Architecture = 'x64'
 )
 
 $ErrorActionPreference = 'Stop'
+$targetArch = $Architecture.ToLowerInvariant()
 
 function Find-ExecutablePath {
     param([string[]]$Candidates)
@@ -37,17 +41,19 @@ if ($dotnetPath) {
     }
 }
 
-# 2. Visual Studio C++ Build Tools + Windows 10 SDK (>= 10.0.17763.0)
+# 2. Visual Studio C++ Build Tools + Windows 10/11 SDK (>= 10.0.17763.0)
 $vswherePath = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
 $vsCppInstalled = $false
 $vsDetail = 'Not installed'
+$vcComponent = if ($targetArch -eq 'arm64') { 'Microsoft.VisualStudio.Component.VC.Tools.ARM64' } else { 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64' }
+$vcShortLabel = if ($targetArch -eq 'arm64') { 'VC.Tools.ARM64' } else { 'VC.Tools.x86.x64' }
 if (Test-Path $vswherePath) {
-    $vsInstall = & $vswherePath -all -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property displayName 2>$null | Select-Object -First 1
+    $vsInstall = & $vswherePath -all -products * -requires $vcComponent -property displayName 2>$null | Select-Object -First 1
     if (-not [string]::IsNullOrWhiteSpace($vsInstall)) {
         $vsCppInstalled = $true
-        $vsDetail = $vsInstall
+        $vsDetail = "$vsInstall ($vcShortLabel)"
     } else {
-        $vsDetail = 'Visual Studio Installer found, but VC.Tools.x86.x64 is missing'
+        $vsDetail = "Visual Studio Installer found, but $vcShortLabel is missing"
     }
 }
 
@@ -123,6 +129,7 @@ $allInstalled = $dotnet9Installed -and $vsAndSdkInstalled -and $swiftInstalled -
 
 $report = [ordered]@{
     OSBuild             = [System.Environment]::OSVersion.Version.ToString()
+    TargetArchitecture  = $targetArch
     DotNetSdk9          = [ordered]@{
         Installed           = $dotnet9Installed
         Detail              = $dotnet9Detail
