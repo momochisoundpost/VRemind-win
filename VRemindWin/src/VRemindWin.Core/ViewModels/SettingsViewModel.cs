@@ -304,32 +304,21 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     {
         const string markdown = """
             ### Release Notes
-            > *I am thrilled and humbled to announce that VRemind for Windows has achieved full feature parity with macOS v1.3.1 — zero Electron, zero WebView2, and 100% Windows 10 1809 LTSC compatible. Agree? 🙏✨*
+            **Evan, you son of a ##### you spotted a first bug!**
 
-            Yo dawg, we heard you liked updates, so we brought the native Markdown and looping video updater straight to WinUI 3!
+            I asked my friend Evan to test my new Windows port of my beloved Mac utility app, and spotted an ugly border where I thought *"probably because I'm using Aero Lite theme on light mode."* Nope — turned out it was just as ugly on Windows 11, and jesus christ it's ugly mate.
 
-            #### ✨ Highlights & What's New
-            - [x] **DirectX 10 Celebration Mode:** Vsync-driven `CompositionTarget.Rendering` confetti rain and rainbow status accents across English, Indonesian, and Japanese stream milestones.
-            - [x] **JSON Backup & Restore:** Portable schema v1 backups (`vremind-backup-YYYY-MM-DD.json`) interchangeable between macOS and Windows.
-            - [x] **First-Run Onboarding:** Configure your starter VTuber handle, test Windows toast alerts, and set update preferences.
-
-            | Feature | macOS `VRemind` | Windows `VRemind-win` |
-            | --- | --- | --- |
-            | Engine | Swift `VRemindCore` | Swift `VRemindCore` (`vremind-core.exe`) |
-            | UI | SwiftUI + AppKit | Native WinUI 3 + Win32 Tray |
-            | Min OS | macOS 12 Monterey | Windows 10 1809 LTSC (`17763`) |
-
-            ```powershell
-            # Launch VRemind for Windows
-            .\dist\VRemindWin\VRemindWin.exe
-            ```
+            #### 🛠️ What's Fixed
+            - [x] **Stripped Ghost Win32 Frame:** Cleared residual `WS_DLGFRAME`, `WS_SYSMENU`, and `WS_EX_WINDOWEDGE` non-client styles so `ClientRect == WindowRect` (`360×440`).
+            - [x] **Native Windows 11 DWM Corners & Shadow:** Enabled hardware-antialiased `DWMWCP_ROUND` corners, DWM shadow, and theme-synced 1px `DWMWA_BORDER_COLOR` with zero dark corner triangles.
+            - [x] **Flush Windows 10 / Aero Lite Card:** Switched Windows 10 (light & dark themes) to a clean flush `0` radius edge-to-edge card with a subtle theme-matched `1`px hairline border.
 
             <video src="https://github.com/user-attachments/assets/vremind-win-parity-demo.mp4"></video>
             """;
 
         return new CliReleaseDto(
             TagName: "v1.3.2",
-            Name: "VRemind 1.3.2 (Border Chrome Hotfix)",
+            Name: "Evan, you son of a ##### you spotted a first bug!",
             Body: markdown,
             HtmlURL: "https://github.com/momochisoundpost/VRemind-win",
             DownloadURL: "https://github.com/momochisoundpost/VRemind-win/releases");

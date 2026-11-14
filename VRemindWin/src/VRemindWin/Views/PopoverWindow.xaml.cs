@@ -76,6 +76,7 @@ public sealed partial class PopoverWindow : Window
         AttachWindowSubclass();
         ApplyBorderlessChrome();
 
+        _popoverView.Loaded += (_, _) => ApplyDwmChromeForCurrentTheme();
         _popoverView.ActualThemeChanged += (_, _) => ApplyDwmChromeForCurrentTheme();
         _appWindow.Closing += AppWindow_Closing;
         Activated += PopoverWindow_Activated;
@@ -224,7 +225,10 @@ public sealed partial class PopoverWindow : Window
         }
 
         var chromeLayout = PopoverWindowChromePolicy.ResolveChromeLayout(osBuild, dwmApplied, isDarkTheme);
-        _popoverView.ApplyChromeAppearance(chromeLayout.RootCornerRadius, chromeLayout.RootBorderThickness);
+        _popoverView.ApplyChromeAppearance(
+            chromeLayout.RootCornerRadius,
+            chromeLayout.RootBorderThickness,
+            chromeLayout.BorderColorRef);
     }
 
     private void ApplyBorderlessStyles(bool ensureTopMost = false)

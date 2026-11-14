@@ -2,12 +2,16 @@
 
 ## [1.3.2] - 2026-11-14
 
-### Fixed
-- **Borderless Tray Flyout Chrome (`PopoverWindow` / `PopoverView`):** Stripped residual Win32 non-client dialog frame styles (`WS_CAPTION`, `WS_DLGFRAME`, `WS_SYSMENU`, `WS_EX_WINDOWEDGE`) left behind by `OverlappedPresenter.SetBorderAndTitleBar(false, false)` and handled `WM_NCCALCSIZE` (`0`) so `ClientRect == WindowRect` with zero 3px outer white border or corner triangles on both Windows 10 (including Aero Lite) and Windows 11.
-- **OS-Appropriate Window Framing:**
-  - **Windows 11 (build `22000+`):** Applies DWM `DWMWCP_ROUND` (`8` DIP anti-aliased rounded corners), native drop shadow (`DwmExtendFrameIntoClientArea`), and theme-synced `DWMWA_BORDER_COLOR` (`#3E3E3E` dark / `#D6D6D6` light) while flattening XAML root corners/border (`0`) to prevent corner artifacts and double borders.
-  - **Windows 10 (pre-`22000`, or DWM attribute failure):** Uses a flush `0` corner radius with a clean `1` DIP XAML border so corners stay crisp edge-to-edge on standard and Aero Lite themes.
-  - Preserved `WS_EX_TOPMOST` and `WS_EX_TOOLWINDOW` on every `ShowAt` call.
+### Release Notes
+**Evan, you son of a ##### you spotted a first bug!**
+
+I asked my friend Evan to test my new Windows port of my beloved Mac utility app, and spotted an ugly chunky white border around the tray popup. For a while I just shrugged it off thinking *"probably because I'm using the Aero Lite theme on light mode."* Nope — Evan fired it up on Windows 11 and sent back a screenshot with the exact same cursed dialog box frame and dark corner triangles peeking out. And jesus christ it's ugly mate.
+
+### What's Fixed
+- **Killed the Ghost Win32 Dialog Frame (`PopoverWindow`):** `OverlappedPresenter.SetBorderAndTitleBar(false, false)` was still leaving `WS_DLGFRAME`, `WS_SYSMENU`, and `WS_EX_WINDOWEDGE` intact behind the scenes (shrinking `ClientRect` to `354×434` inside `360×440`), causing the 3px white border and corner gaps on both Windows 10 and Windows 11. `PopoverWindow` now strips those residual frame/edge flags, handles `WM_NCCALCSIZE` (`0`) so `ClientRect == WindowRect`, and preserves `WS_EX_TOOLWINDOW | WS_EX_TOPMOST`.
+- **Clean OS-Appropriate Framing (`PopoverView` + DWM):**
+  - **Windows 11 (build `22000+`):** Applies native DWM rounded corners (`DWMWCP_ROUND`), drop shadow (`DwmExtendFrameIntoClientArea`), and theme-synced 1px `DWMWA_BORDER_COLOR` (`#3E3E3E` dark / `#D6D6D6` light), while flattening the XAML root card (`0`) so DWM clips cleanly with zero corner triangles or double borders.
+  - **Windows 10 (including Aero Lite light & dark modes, or DWM fallback):** Uses a flush `0` corner radius with `BackgroundSizing="OuterBorderEdge"` and a crisp `1` DIP theme-matched hairline border (`#D6D6D6` light / `#3E3E3E` dark) — no harsh borders, no corner gaps.
 
 ## [1.3.1] - 2026-11-14
 

@@ -9,6 +9,7 @@
     <Grid
         x:Name="RootGrid"
         Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+        BackgroundSizing="OuterBorderEdge"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
         CornerRadius="0"

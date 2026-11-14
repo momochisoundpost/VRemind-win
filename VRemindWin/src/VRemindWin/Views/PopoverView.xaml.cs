@@ -58,10 +58,20 @@ public sealed partial class PopoverView : UserControl
         UpdateCelebrationAnimationState();
     }
 
-    public void ApplyChromeAppearance(double cornerRadius, double borderThickness)
+    public void ApplyChromeAppearance(double cornerRadius, double borderThickness, uint borderColorRef)
     {
         RootGrid.CornerRadius = new CornerRadius(cornerRadius);
         RootGrid.BorderThickness = new Thickness(borderThickness);
+        if (borderThickness > 0)
+        {
+            var borderColor = Windows.UI.Color.FromArgb(
+                255,
+                (byte)(borderColorRef & 0xFF),
+                (byte)((borderColorRef >> 8) & 0xFF),
+                (byte)((borderColorRef >> 16) & 0xFF));
+            RootGrid.BorderBrush = new SolidColorBrush(borderColor);
+        }
+
         double innerBottomRadius = Math.Max(0.0, cornerRadius - borderThickness);
         BottomAddBar.CornerRadius = new CornerRadius(0, 0, innerBottomRadius, innerBottomRadius);
     }
