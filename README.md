@@ -123,6 +123,9 @@ Because **WinUI 3 is the Windows equivalent of SwiftUI**—modern, declarative, 
 ### Why use Swift `VRemindCore` inside a Windows WinUI 3 app?
 Because maintaining two separate YouTube HTML scrapers and Twitch GraphQL parsers in two different languages is a trap. By keeping [`VRemindCore`](https://github.com/momochisoundpost/VRemindCore) in pure cross-platform Swift (`Foundation` + `FoundationNetworking`) and compiling it into a headless companion binary (`vremind-core.exe`), every backend update drops into both `VRemind` (macOS) and `VRemind-win` (Windows) like a Lego piece.
 
+### Why is the file size so much bigger than the Mac app?
+Honestly? **Because I suck at Windows development (Swift on Mac is my mother tongue)** — and I wanted to make 100% sure you don't have to install any external redistributables just to launch the app. Instead of making you hunt down separate `.NET 9`, `Windows App SDK`, and `Swift for Windows` runtime installers (especially on stripped-down Windows 10 LTSC installs), the release bundle ships everything **self-contained** inside one folder so you can just unzip and run `VRemindWin.exe`. I'll optimize and trim the size down sooner or later!
+
 ### Do I need a YouTube or Twitch API key?
 **No.** VRemind requires zero API keys, no Google Cloud developer projects, and no Twitch OAuth credentials. It checks YouTube directly via publicly accessible `/live` pages and checks Twitch via public unauthenticated web queries.
 
