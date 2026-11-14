@@ -58,6 +58,14 @@ public sealed partial class PopoverView : UserControl
         UpdateCelebrationAnimationState();
     }
 
+    public void ApplyChromeAppearance(double cornerRadius, double borderThickness)
+    {
+        RootGrid.CornerRadius = new CornerRadius(cornerRadius);
+        RootGrid.BorderThickness = new Thickness(borderThickness);
+        double innerBottomRadius = Math.Max(0.0, cornerRadius - borderThickness);
+        BottomAddBar.CornerRadius = new CornerRadius(0, 0, innerBottomRadius, innerBottomRadius);
+    }
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (string.IsNullOrEmpty(e.PropertyName) ||

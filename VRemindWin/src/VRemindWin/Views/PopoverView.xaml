@@ -11,7 +11,7 @@
         Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
-        CornerRadius="8"
+        CornerRadius="0"
         KeyDown="RootGrid_KeyDown">
 
         <Grid.Resources>
@@ -310,7 +310,12 @@
         <Border Grid.Row="3" Height="1" Background="{ThemeResource CardStrokeColorDefaultBrush}" />
 
         <!-- Bottom Add Bar -->
-        <StackPanel Grid.Row="4" Padding="12,10" Spacing="6" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+        <StackPanel
+            x:Name="BottomAddBar"
+            Grid.Row="4"
+            Padding="12,10"
+            Spacing="6"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
             <TextBlock
                 Text="{x:Bind ViewModel.ValidationError, Mode=OneWay}"
                 Visibility="{x:Bind ViewModel.HasValidationError, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"

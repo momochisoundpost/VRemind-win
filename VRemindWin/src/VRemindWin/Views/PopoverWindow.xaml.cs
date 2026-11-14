@@ -11,9 +11,16 @@ namespace VRemindWin.Views;
 
 public sealed partial class PopoverWindow : Window
 {
+    private const uint WmEraseBkgnd = 0x0014;
+    private const uint WmNcDestroy = 0x0082;
+    private const uint WmNcCalcSize = 0x0083;
+    private const nuint ChromeSubclassId = 1;
+
     private readonly IntPtr _hwnd;
     private readonly AppWindow _appWindow;
     private readonly PopoverView _popoverView;
+    private readonly SubclassProcDelegate _subclassProc;
+    private bool _isSubclassAttached;
     private bool _isModalDialogOpen;
     private bool _allowClose;
     private DateTimeOffset? _lastAutoDeactivatedUtc;
@@ -40,8 +47,6 @@ public sealed partial class PopoverWindow : Window
         _appWindow = AppWindow.GetFromWindowId(windowId);
         _appWindow.Title = "VRemind";
 
-        // AppWindow.IsShownInSwitchers throws NotImplementedException on Windows 10; apply WS_EX_TOOLWINDOW natively.
-        HideFromTaskbarAndSwitcher(_hwnd);
         try
         {
             _appWindow.IsShownInSwitchers = false;
@@ -67,6 +72,11 @@ public sealed partial class PopoverWindow : Window
             presenter.SetBorderAndTitleBar(false, false);
         }
 
+        _subclassProc = ChromeSubclassProc;
+        AttachWindowSubclass();
+        ApplyBorderlessChrome();
+
+        _popoverView.ActualThemeChanged += (_, _) => ApplyDwmChromeForCurrentTheme();
         _appWindow.Closing += AppWindow_Closing;
         Activated += PopoverWindow_Activated;
 
@@ -85,8 +95,10 @@ public sealed partial class PopoverWindow : Window
     public void ShowAt(int x, int y, int width, int height)
     {
         _lastAutoDeactivatedUtc = null;
+        ApplyBorderlessStyles();
         _appWindow.MoveAndResize(new RectInt32(x, y, width, height));
         _appWindow.Show(activateWindow: true);
+        ApplyBorderlessStyles(ensureTopMost: true);
         _popoverView.SetPopoverVisible(true);
         Activate();
         _ = SetForegroundWindow(_hwnd);
@@ -105,6 +117,7 @@ public sealed partial class PopoverWindow : Window
     public void ForceClose()
     {
         _popoverView.SetPopoverVisible(false);
+        DetachWindowSubclass();
         _allowClose = true;
         Close();
     }
@@ -130,21 +143,135 @@ public sealed partial class PopoverWindow : Window
         }
     }
 
-    private static void HideFromTaskbarAndSwitcher(IntPtr hwnd)
+    private void AttachWindowSubclass()
     {
+        if (!_isSubclassAttached && SetWindowSubclass(_hwnd, _subclassProc, ChromeSubclassId, IntPtr.Zero))
+        {
+            _isSubclassAttached = true;
+        }
+    }
+
+    private void DetachWindowSubclass()
+    {
+        if (_isSubclassAttached)
+        {
+            _ = RemoveWindowSubclass(_hwnd, _subclassProc, ChromeSubclassId);
+            _isSubclassAttached = false;
+        }
+    }
+
+    private IntPtr ChromeSubclassProc(
+        IntPtr hWnd,
+        uint uMsg,
+        IntPtr wParam,
+        IntPtr lParam,
+        nuint uIdSubclass,
+        IntPtr dwRefData)
+    {
+        if (uMsg == WmNcCalcSize && wParam != IntPtr.Zero)
+        {
+            // Eliminate any residual Win32 non-client border/titlebar inset (e.g. WS_DLGFRAME / WS_EX_WINDOWEDGE).
+            return IntPtr.Zero;
+        }
+
+        if (uMsg == WmEraseBkgnd)
+        {
+            return new IntPtr(1);
+        }
+
+        if (uMsg == WmNcDestroy)
+        {
+            DetachWindowSubclass();
+        }
+
+        return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+    }
+
+    private void ApplyBorderlessChrome()
+    {
+        ApplyBorderlessStyles();
+        ApplyDwmChromeForCurrentTheme();
+    }
+
+    private void ApplyDwmChromeForCurrentTheme()
+    {
+        int osBuild = Environment.OSVersion.Version.Build;
+        bool isDarkTheme = _popoverView.ActualTheme != ElementTheme.Light;
+        bool dwmApplied = false;
+
+        if (PopoverWindowChromePolicy.IsWindows11OrGreater(osBuild))
+        {
+            // Keep DWM drop shadow alive on borderless window without altering client geometry.
+            var shadowMargins = new MARGINS { cxLeftWidth = 0, cxRightWidth = 0, cyTopHeight = 0, cyBottomHeight = 1 };
+            _ = DwmExtendFrameIntoClientArea(_hwnd, ref shadowMargins);
+
+            var layoutCandidate = PopoverWindowChromePolicy.ResolveChromeLayout(osBuild, dwmAttributesSucceeded: true, isDarkTheme: isDarkTheme);
+            uint cornerPref = layoutCandidate.CornerPreferenceValue;
+            int hrCorner = DwmSetWindowAttribute(
+                _hwnd,
+                PopoverWindowChromePolicy.DwmWaWindowCornerPreference,
+                ref cornerPref,
+                sizeof(uint));
+
+            uint borderColor = layoutCandidate.BorderColorRef;
+            int hrBorder = DwmSetWindowAttribute(
+                _hwnd,
+                PopoverWindowChromePolicy.DwmWaBorderColor,
+                ref borderColor,
+                sizeof(uint));
+
+            dwmApplied = hrCorner == 0 && hrBorder == 0;
+        }
+
+        var chromeLayout = PopoverWindowChromePolicy.ResolveChromeLayout(osBuild, dwmApplied, isDarkTheme);
+        _popoverView.ApplyChromeAppearance(chromeLayout.RootCornerRadius, chromeLayout.RootBorderThickness);
+    }
+
+    private void ApplyBorderlessStyles(bool ensureTopMost = false)
+    {
+        const int gwlStyle = -16;
         const int gwlExStyle = -20;
-        const long wsExToolWindow = 0x00000080L;
-        const long wsExAppWindow = 0x00040000L;
         const uint swpNoSize = 0x0001;
         const uint swpNoMove = 0x0002;
         const uint swpNoZOrder = 0x0004;
         const uint swpNoActivate = 0x0010;
         const uint swpFrameChanged = 0x0020;
 
-        long exStyle = GetWindowLongPtrW(hwnd, gwlExStyle).ToInt64();
-        exStyle = (exStyle | wsExToolWindow) & ~wsExAppWindow;
-        _ = SetWindowLongPtrW(hwnd, gwlExStyle, new IntPtr(exStyle));
-        _ = SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0, swpNoMove | swpNoSize | swpNoZOrder | swpNoActivate | swpFrameChanged);
+        long currentStyle = GetWindowLongPtrW(_hwnd, gwlStyle).ToInt64();
+        long currentExStyle = GetWindowLongPtrW(_hwnd, gwlExStyle).ToInt64();
+        var (borderlessStyle, borderlessExStyle) = PopoverWindowChromePolicy.StripFrameStyles(currentStyle, currentExStyle);
+
+        if (borderlessStyle != currentStyle)
+        {
+            _ = SetWindowLongPtrW(_hwnd, gwlStyle, new IntPtr(borderlessStyle));
+        }
+
+        if (borderlessExStyle != currentExStyle)
+        {
+            _ = SetWindowLongPtrW(_hwnd, gwlExStyle, new IntPtr(borderlessExStyle));
+        }
+
+        IntPtr insertAfter = ensureTopMost ? new IntPtr(-1) : IntPtr.Zero;
+        uint flags = swpNoMove | swpNoSize | swpNoActivate | swpFrameChanged | (ensureTopMost ? 0u : swpNoZOrder);
+        _ = SetWindowPos(_hwnd, insertAfter, 0, 0, 0, 0, flags);
+    }
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate IntPtr SubclassProcDelegate(
+        IntPtr hWnd,
+        uint uMsg,
+        IntPtr wParam,
+        IntPtr lParam,
+        nuint uIdSubclass,
+        IntPtr dwRefData);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MARGINS
+    {
+        public int cxLeftWidth;
+        public int cxRightWidth;
+        public int cyTopHeight;
+        public int cyBottomHeight;
     }
 
     [DllImport("user32.dll")]
@@ -165,4 +292,19 @@ public sealed partial class PopoverWindow : Window
         int cx,
         int cy,
         uint uFlags);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmExtendFrameIntoClientArea(IntPtr hWnd, ref MARGINS pMarInset);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref uint pvAttribute, uint cbAttribute);
+
+    [DllImport("comctl32.dll", SetLastError = true)]
+    private static extern bool SetWindowSubclass(IntPtr hWnd, SubclassProcDelegate pfnSubclass, nuint uIdSubclass, IntPtr dwRefData);
+
+    [DllImport("comctl32.dll", SetLastError = true)]
+    private static extern bool RemoveWindowSubclass(IntPtr hWnd, SubclassProcDelegate pfnSubclass, nuint uIdSubclass);
+
+    [DllImport("comctl32.dll")]
+    private static extern IntPtr DefSubclassProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
 }

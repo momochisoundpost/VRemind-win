@@ -495,7 +495,7 @@ public sealed class CoordinatorAndViewModelTests
             Settings: settings,
             Notifications: [],
             IsPopoverCelebrating: true,
-            AppVersion: "1.3.1");
+            AppVersion: "1.3.2");
 
         var bridge = new StubCoreCliBridge
         {
@@ -548,7 +548,7 @@ public sealed class CoordinatorAndViewModelTests
         Assert.Single(toasts.Dispatched);
         Assert.Contains("private", vm.UpdateStatusText ?? string.Empty, StringComparison.OrdinalIgnoreCase);
         Assert.NotNull(shownRelease);
-        Assert.Equal("v1.3.1", shownRelease!.TagName);
+        Assert.Equal("v1.3.2", shownRelease!.TagName);
         Assert.Contains("<video", shownRelease.Body ?? string.Empty, StringComparison.OrdinalIgnoreCase);
     }
 

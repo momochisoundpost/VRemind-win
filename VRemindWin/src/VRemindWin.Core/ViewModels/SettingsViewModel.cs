@@ -81,7 +81,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     }
 
     public string CurrentVersion => string.IsNullOrWhiteSpace(_coordinator.CurrentState.AppVersion)
-        ? "1.3.1"
+        ? "1.3.2"
         : _coordinator.CurrentState.AppVersion;
 
     public string CurrentVersionText => $"Current Version: {CurrentVersion}";
@@ -328,8 +328,8 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
             """;
 
         return new CliReleaseDto(
-            TagName: "v1.3.1",
-            Name: "VRemind 1.3.1 (Feature Parity Preview)",
+            TagName: "v1.3.2",
+            Name: "VRemind 1.3.2 (Border Chrome Hotfix)",
             Body: markdown,
             HtmlURL: "https://github.com/momochisoundpost/VRemind-win",
             DownloadURL: "https://github.com/momochisoundpost/VRemind-win/releases");

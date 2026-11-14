@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.2] - 2026-11-14
+
+### Fixed
+- **Borderless Tray Flyout Chrome (`PopoverWindow` / `PopoverView`):** Stripped residual Win32 non-client dialog frame styles (`WS_CAPTION`, `WS_DLGFRAME`, `WS_SYSMENU`, `WS_EX_WINDOWEDGE`) left behind by `OverlappedPresenter.SetBorderAndTitleBar(false, false)` and handled `WM_NCCALCSIZE` (`0`) so `ClientRect == WindowRect` with zero 3px outer white border or corner triangles on both Windows 10 (including Aero Lite) and Windows 11.
+- **OS-Appropriate Window Framing:**
+  - **Windows 11 (build `22000+`):** Applies DWM `DWMWCP_ROUND` (`8` DIP anti-aliased rounded corners), native drop shadow (`DwmExtendFrameIntoClientArea`), and theme-synced `DWMWA_BORDER_COLOR` (`#3E3E3E` dark / `#D6D6D6` light) while flattening XAML root corners/border (`0`) to prevent corner artifacts and double borders.
+  - **Windows 10 (pre-`22000`, or DWM attribute failure):** Uses a flush `0` corner radius with a clean `1` DIP XAML border so corners stay crisp edge-to-edge on standard and Aero Lite themes.
+  - Preserved `WS_EX_TOPMOST` and `WS_EX_TOOLWINDOW` on every `ShowAt` call.
+
 ## [1.3.1] - 2026-11-14
 
 ### Release Notes
