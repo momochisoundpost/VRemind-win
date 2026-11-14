@@ -71,10 +71,15 @@ public sealed partial class UpdateAvailableWindow : Window
     public void UpdateRelease(CliReleaseDto release, string currentVersion)
     {
         _release = release;
-        TitleTextBlock.Text = !string.IsNullOrWhiteSpace(release.Name)
-            ? $"{release.Name} is available!"
-            : $"VRemind {release.TagName} is available!";
+
+        var chrome = UpdateWindowChromePolicy.Resolve(release);
+        _appWindow.Title = chrome.WindowTitle;
+        TitleTextBlock.Text = chrome.HeaderTitle;
         SubtitleTextBlock.Text = $"You are currently running VRemind v{currentVersion}. Here's what's new:";
+        SubtitleTextBlock.Visibility = chrome.ShowSubtitle ? Visibility.Visible : Visibility.Collapsed;
+        SkipVersionButton.Visibility = chrome.ShowSkipButton ? Visibility.Visible : Visibility.Collapsed;
+        DownloadUpdateButton.Visibility = chrome.ShowDownloadButton ? Visibility.Visible : Visibility.Collapsed;
+        RemindLaterButton.Content = chrome.DismissButtonText;
 
         var body = string.IsNullOrWhiteSpace(release.Body)
             ? "_No release notes provided._"
@@ -91,6 +96,12 @@ public sealed partial class UpdateAvailableWindow : Window
 
     private async void SkipVersionButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_release.IsReaderMode)
+        {
+            Close();
+            return;
+        }
+
         try
         {
             await _onSkipVersion(_release.TagName);
@@ -112,6 +123,12 @@ public sealed partial class UpdateAvailableWindow : Window
 
     private void DownloadUpdateButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_release.IsReaderMode)
+        {
+            Close();
+            return;
+        }
+
         var target = !string.IsNullOrWhiteSpace(_release.DownloadURL)
             ? _release.DownloadURL
             : _release.HtmlURL;

@@ -64,7 +64,8 @@ public sealed record CliReleaseDto(
     [property: JsonPropertyName("name")] string? Name,
     [property: JsonPropertyName("body")] string? Body,
     [property: JsonPropertyName("htmlURL")] string HtmlURL,
-    [property: JsonPropertyName("downloadURL")] string DownloadURL
+    [property: JsonPropertyName("downloadURL")] string DownloadURL,
+    [property: JsonIgnore] bool IsReaderMode = false
 );
 
 public sealed record CliUpdateCheckResult(

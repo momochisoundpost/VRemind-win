@@ -77,16 +77,19 @@
             </Grid.ColumnDefinitions>
 
             <Button
+                x:Name="SkipVersionButton"
                 Grid.Column="0"
                 Content="Skip This Version"
                 Click="SkipVersionButton_Click" />
 
             <Button
+                x:Name="RemindLaterButton"
                 Grid.Column="2"
                 Content="Remind Me Later"
                 Click="RemindLaterButton_Click" />
 
             <Button
+                x:Name="DownloadUpdateButton"
                 Grid.Column="3"
                 Content="Download Update"
                 Style="{ThemeResource AccentButtonStyle}"
