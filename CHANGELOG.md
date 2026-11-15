@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.3] - 2026-11-14
+
+### Release Notes
+**The Windows port is now officially more capable than the original Mac app. I don't know how we got here either.**
+
+`v1.3.1` was supposed to just match the Mac version, and `v1.3.2` was supposed to just fix an ugly border. Naturally, `v1.3.3` escalates things by adding a feature the Mac version doesn't even have yet, while evicting the last remnants of 1995-era Win32 window frames from the rest of the app.
+
+### What's New
+- **Drag-to-Reorder Your Watchlist:**
+  - Previously, your channels sat in the exact order you added them forever, like a permanent record of your impulse decisions. Now you can click and drag any channel up or down inside `LIVE NOW`, `UPCOMING`, or `OFFLINE` to put your actual favorites at the top.
+  - Other rows politely slide out of the way while you drag, normal clicks still open the stream, and the trash icon still deletes channels without accidentally dragging them into oblivion.
+- **100% Win32-Free Window UI:**
+  - Fixing the tray popup in `v1.3.2` had the unfortunate side effect of making the Settings, Onboarding, and Software Update windows look ten times worse by comparison — still rocking blinding white Win32 title bars, tiny 16×16 corner icons, and grayed-out Minimize/Maximize buttons that existed solely to tell you "no."
+  - All of that is gone. Every window in the app now uses a clean, seamless UWP frame (like the native Windows Settings app) with a matching dark/light title bar, a single `✕` close button, crisp borders on Windows 10, and native rounded corners on Windows 11.
+
 ## [1.3.2] - 2026-11-14
 
 ### Release Notes

@@ -81,7 +81,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     }
 
     public string CurrentVersion => string.IsNullOrWhiteSpace(_coordinator.CurrentState.AppVersion)
-        ? "1.3.2"
+        ? "1.3.3"
         : _coordinator.CurrentState.AppVersion;
 
     public string CurrentVersionText => $"Current Version: {CurrentVersion}";
@@ -304,21 +304,20 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     {
         const string markdown = """
             ### Release Notes
-            **Evan, you son of a ##### you spotted a first bug!**
+            **The Windows port is now officially more capable than the original Mac app. I don't know how we got here either.**
 
-            I asked my friend Evan to test my new Windows port of my beloved Mac utility app, and spotted an ugly border where I thought *"probably because I'm using Aero Lite theme on light mode."* Nope — turned out it was just as ugly on Windows 11, and jesus christ it's ugly mate.
+            `v1.3.1` was supposed to just match the Mac version, and `v1.3.2` was supposed to just fix an ugly border. Naturally, `v1.3.3` escalates things by adding a feature the Mac version doesn't even have yet, while evicting the last remnants of 1995-era Win32 window frames from the rest of the app.
 
-            #### 🛠️ What's Fixed
-            - [x] **Stripped Ghost Win32 Frame:** Cleared residual `WS_DLGFRAME`, `WS_SYSMENU`, and `WS_EX_WINDOWEDGE` non-client styles so `ClientRect == WindowRect` (`360×440`).
-            - [x] **Native Windows 11 DWM Corners & Shadow:** Enabled hardware-antialiased `DWMWCP_ROUND` corners, DWM shadow, and theme-synced 1px `DWMWA_BORDER_COLOR` with zero dark corner triangles.
-            - [x] **Flush Windows 10 / Aero Lite Card:** Switched Windows 10 (light & dark themes) to a clean flush `0` radius edge-to-edge card with a subtle theme-matched `1`px hairline border.
+            #### ✨ What's New
+            - [x] **Drag-to-Reorder Your Watchlist:** Click and drag any channel up or down inside `LIVE NOW`, `UPCOMING`, or `OFFLINE` so your list is no longer a permanent museum of the exact order you added people in.
+            - [x] **100% Win32-Free Window UI:** Replaced the blinding white Win32 title bars, tiny 16×16 corner icons, and grayed-out Minimize/Maximize buttons that existed solely to tell you "no" with a clean, seamless UWP frame and a single `✕` close button across every window.
 
             <video src="https://github.com/user-attachments/assets/vremind-win-parity-demo.mp4"></video>
             """;
 
         return new CliReleaseDto(
-            TagName: "v1.3.2",
-            Name: "Evan, you son of a ##### you spotted a first bug!",
+            TagName: "v1.3.3",
+            Name: "The Windows port is now officially more capable than the original Mac app.",
             Body: markdown,
             HtmlURL: "https://github.com/momochisoundpost/VRemind-win",
             DownloadURL: "https://github.com/momochisoundpost/VRemind-win/releases");

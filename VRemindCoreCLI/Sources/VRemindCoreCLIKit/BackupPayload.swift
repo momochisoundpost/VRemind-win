@@ -17,7 +17,7 @@ public enum BackupError: Error, LocalizedError, Equatable, Sendable {
 
 public struct BackupPayload: Codable, Equatable, Sendable {
     public static let currentSchemaVersion = 1
-    public static let defaultAppVersion = "1.3.2"
+    public static let defaultAppVersion = "1.3.3"
 
     public let schemaVersion: Int
     public let appVersion: String

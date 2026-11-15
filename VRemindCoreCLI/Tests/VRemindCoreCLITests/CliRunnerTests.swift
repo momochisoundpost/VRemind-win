@@ -252,7 +252,7 @@ import VRemindCore
         #expect(futureState.sections.upcoming[0].isCelebration == true)
         #expect(futureState.sections.upcoming[0].celebrationType == "debut")
         #expect(futureState.isPopoverCelebrating == false)
-        #expect(futureState.appVersion == "1.3.2")
+        #expect(futureState.appVersion == "1.3.3")
 
         // 2. Upcoming celebration stream scheduled later today: popover confetti active
         let todayStatuses: [String: StreamStatus] = [

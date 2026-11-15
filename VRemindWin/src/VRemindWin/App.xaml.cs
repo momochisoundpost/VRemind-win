@@ -230,7 +230,7 @@ public partial class App : Application
                 return;
             }
 
-            var currentVersion = _settingsViewModel?.CurrentVersion ?? "1.3.2";
+            var currentVersion = _settingsViewModel?.CurrentVersion ?? "1.3.3";
             if (_updateAvailableWindow is null)
             {
                 _updateAvailableWindow = new UpdateAvailableWindow(
