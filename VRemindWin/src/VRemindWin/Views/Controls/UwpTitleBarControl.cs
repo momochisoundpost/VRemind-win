@@ -1,5 +1,6 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -71,6 +72,9 @@ public sealed class UwpTitleBarControl : Grid
             VerticalAlignment = VerticalAlignment.Stretch,
             Child = _closeGlyph
         };
+        AutomationProperties.SetName(_closeButtonBorder, UwpWindowChromePolicy.CloseButtonAccessibleName);
+        AutomationProperties.SetAutomationId(_closeButtonBorder, "TitleBarCloseButton");
+        ToolTipService.SetToolTip(_closeButtonBorder, UwpWindowChromePolicy.CloseButtonAccessibleName);
         _closeButtonBorder.PointerEntered += CloseButton_PointerEntered;
         _closeButtonBorder.PointerExited += CloseButton_PointerExited;
         _closeButtonBorder.PointerPressed += CloseButton_PointerPressed;

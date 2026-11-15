@@ -35,6 +35,7 @@ public static class UwpWindowChromePolicy
     public const double TitleBarHeightDip = 32.0;
     public const double CloseButtonWidthDip = 46.0;
     public const double ResizeBorderThicknessDip = 5.0;
+    public const string CloseButtonAccessibleName = "Close";
 
     public const int HtClient = 1;
     public const int HtCaption = 2;

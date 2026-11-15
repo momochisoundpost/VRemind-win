@@ -117,4 +117,27 @@ public sealed class UwpWindowChromeTests
         int actual = UwpWindowChromePolicy.HitTestResizeBorder(x, y, 480, 420, 5, isResizable: true);
         Assert.Equal(expectedHt, actual);
     }
+
+    [Fact]
+    public void CloseButton_ConfiguresAccessibleNameAndTooltip()
+    {
+        Assert.Equal("Close", UwpWindowChromePolicy.CloseButtonAccessibleName);
+
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        string? titleBarPath = null;
+        for (int i = 0; i < 8 && dir is not null; i++, dir = dir.Parent)
+        {
+            string candidate = Path.Combine(dir.FullName, "src", "VRemindWin", "Views", "Controls", "UwpTitleBarControl.cs");
+            if (File.Exists(candidate))
+            {
+                titleBarPath = candidate;
+                break;
+            }
+        }
+
+        Assert.NotNull(titleBarPath);
+        string source = File.ReadAllText(titleBarPath!);
+        Assert.Contains("AutomationProperties.SetName(_closeButtonBorder, UwpWindowChromePolicy.CloseButtonAccessibleName)", source);
+        Assert.Contains("ToolTipService.SetToolTip(_closeButtonBorder, UwpWindowChromePolicy.CloseButtonAccessibleName)", source);
+    }
 }
