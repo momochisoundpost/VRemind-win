@@ -14,6 +14,7 @@ public sealed class CoreCliBridge : ICoreCliBridge
 
     private readonly string _cliExePath;
     private readonly string? _dataDir;
+    private readonly SemaphoreSlim _orderWriteLock = new(1, 1);
 
     public CoreCliBridge(string cliExePath, string? dataDir = null)
     {
@@ -94,6 +95,22 @@ public sealed class CoreCliBridge : ICoreCliBridge
             args.Add("--manual");
         }
         return ExecuteAsync(args, ct);
+    }
+
+    public async Task ReorderChannelsAsync(IReadOnlyList<string> orderedSectionIds, CancellationToken ct = default)
+    {
+        string targetDataDir = ChannelOrderPolicy.ResolveDefaultDataDirectory(_dataDir);
+        await _orderWriteLock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            await Task.Run(
+                () => ChannelOrderPolicy.PersistSectionOrder(targetDataDir, orderedSectionIds),
+                ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            _orderWriteLock.Release();
+        }
     }
 
     private async Task<CliCommandResponse> ExecuteAsync(IEnumerable<string> arguments, CancellationToken ct)

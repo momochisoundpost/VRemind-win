@@ -31,6 +31,7 @@ public sealed class CoordinatorAndViewModelTests
         public Func<string, CancellationToken, Task<CliCommandResponse>>? OnValidateBackup { get; set; }
         public Func<string, CancellationToken, Task<CliCommandResponse>>? OnRestoreBackup { get; set; }
         public Func<bool, CancellationToken, Task<CliCommandResponse>>? OnCheckForUpdates { get; set; }
+        public Func<IReadOnlyList<string>, CancellationToken, Task>? OnReorderChannels { get; set; }
 
         public int RefreshCallCount { get; private set; }
         public int GetStateCallCount { get; private set; }
@@ -125,6 +126,13 @@ public sealed class CoordinatorAndViewModelTests
             return OnCheckForUpdates is not null
                 ? OnCheckForUpdates(manual, ct)
                 : Task.FromResult(MakeOkResponse());
+        }
+
+        public Task ReorderChannelsAsync(IReadOnlyList<string> orderedSectionIds, CancellationToken ct = default)
+        {
+            return OnReorderChannels is not null
+                ? OnReorderChannels(orderedSectionIds, ct)
+                : Task.CompletedTask;
         }
     }
 
@@ -690,5 +698,49 @@ public sealed class CoordinatorAndViewModelTests
         Assert.False(vm.HasValidationError);
         Assert.True(coordinator.CurrentState.Settings.HasCompletedOnboarding);
         Assert.True(bridge.RefreshCallCount >= 1);
+    }
+
+    [Fact]
+    public async Task ReorderSectionAsync_PersistsOrderAndMaintainsDailyProjectionUntilNextDay()
+    {
+        var chanA = MakeChannel("youtube:@a", "A");
+        var chanB = MakeChannel("youtube:@b", "B");
+        var chanC = MakeChannel("youtube:@c", "C");
+        IReadOnlyList<string>? persistedOrder = null;
+        var currentNow = new DateTimeOffset(2026, 11, 14, 20, 0, 0, TimeSpan.Zero);
+
+        var bridge = new StubCoreCliBridge
+        {
+            OnGetState = _ => Task.FromResult(MakeOkResponse(offline: [chanA, chanB, chanC])),
+            OnRefresh = _ => Task.FromResult(MakeOkResponse(offline: [chanA, chanB, chanC])),
+            OnReorderChannels = (ids, _) =>
+            {
+                persistedOrder = ids;
+                return Task.CompletedTask;
+            }
+        };
+
+        var toasts = new FakeToastDispatcher();
+        using var coordinator = new StreamMonitorCoordinator(
+            bridge,
+            toasts,
+            TimeSpan.FromMinutes(3),
+            clock: () => currentNow);
+        var vm = new PopoverViewModel(coordinator);
+
+        await coordinator.InitializeAsync();
+        await vm.ReorderSectionAsync("offline", fromIndex: 2, toIndex: 0);
+
+        Assert.Equal(["youtube:@c", "youtube:@a", "youtube:@b"], vm.OfflineChannels.Select(c => c.Id));
+        Assert.Equal(["youtube:@c", "youtube:@a", "youtube:@b"], persistedOrder);
+
+        // Same day refresh preserves dragged order even if backend response puts [A, B, C]
+        await coordinator.RefreshAllAsync();
+        Assert.Equal(["youtube:@c", "youtube:@a", "youtube:@b"], vm.OfflineChannels.Select(c => c.Id));
+
+        // Next day falls back to backend order
+        currentNow = currentNow.AddDays(1);
+        await coordinator.RefreshAllAsync();
+        Assert.Equal(["youtube:@a", "youtube:@b", "youtube:@c"], vm.OfflineChannels.Select(c => c.Id));
     }
 }

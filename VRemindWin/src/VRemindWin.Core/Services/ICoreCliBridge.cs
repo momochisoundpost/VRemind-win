@@ -15,6 +15,7 @@ public interface ICoreCliBridge
     Task<CliCommandResponse> ValidateBackupAsync(string filePath, CancellationToken ct = default);
     Task<CliCommandResponse> RestoreBackupAsync(string filePath, CancellationToken ct = default);
     Task<CliCommandResponse> CheckForUpdatesAsync(bool manual = false, CancellationToken ct = default);
+    Task ReorderChannelsAsync(IReadOnlyList<string> orderedSectionIds, CancellationToken ct = default);
 }
 
 public interface IToastNotificationDispatcher
