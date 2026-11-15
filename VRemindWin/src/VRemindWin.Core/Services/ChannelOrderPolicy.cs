@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using VRemindWin.Core.Models;
@@ -15,7 +16,8 @@ public static class ChannelOrderPolicy
 
     private static readonly JsonSerializerOptions IndentedJsonOptions = new()
     {
-        WriteIndented = true
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
     public static bool ExceedsDragThreshold(double deltaY)
@@ -268,7 +270,7 @@ public static class ChannelOrderPolicy
             array[slotIndices[i]] = sortedNodes[i];
         }
 
-        return array.ToJsonString(IndentedJsonOptions);
+        return UnescapeJsonSurrogatePairs(array.ToJsonString(IndentedJsonOptions));
     }
 
     public static string ResolveDefaultDataDirectory(string? configuredDataDir)
@@ -318,16 +320,35 @@ public static class ChannelOrderPolicy
             FileShare.ReadWrite);
 
         bool locked = false;
+        bool lockUnsupported = false;
         try
         {
-            try
+            const int maxLockAttempts = 20;
+            for (int attempt = 0; attempt < maxLockAttempts; attempt++)
             {
-                lockStream.Lock(0, 1);
-                locked = true;
+                try
+                {
+                    lockStream.Lock(0, 1);
+                    locked = true;
+                    break;
+                }
+                catch (IOException)
+                {
+                    if (attempt < maxLockAttempts - 1)
+                    {
+                        Thread.Sleep(25);
+                    }
+                }
+                catch (PlatformNotSupportedException)
+                {
+                    lockUnsupported = true;
+                    break;
+                }
             }
-            catch (IOException)
+
+            if (!locked && !lockUnsupported)
             {
-                // Proceed if OS lock cannot be acquired cleanly on non-locking filesystems.
+                return;
             }
 
             if (!File.Exists(channelsPath))
@@ -431,5 +452,83 @@ public static class ChannelOrderPolicy
 
         rank = int.MaxValue;
         return false;
+    }
+
+    private static string UnescapeJsonSurrogatePairs(string json)
+    {
+        if (!json.Contains("\\u", StringComparison.OrdinalIgnoreCase))
+        {
+            return json;
+        }
+
+        var sb = new System.Text.StringBuilder(json.Length);
+        bool inString = false;
+        int i = 0;
+        while (i < json.Length)
+        {
+            char c = json[i];
+            if (!inString)
+            {
+                sb.Append(c);
+                if (c == '"')
+                {
+                    inString = true;
+                }
+                i++;
+                continue;
+            }
+
+            if (c == '"')
+            {
+                inString = false;
+                sb.Append(c);
+                i++;
+                continue;
+            }
+
+            if (c == '\\' && i + 1 < json.Length)
+            {
+                if (json[i + 1] == 'u' &&
+                    i + 11 < json.Length &&
+                    json[i + 6] == '\\' &&
+                    json[i + 7] == 'u' &&
+                    TryParseHex4(json.AsSpan(i + 2, 4), out ushort high) &&
+                    TryParseHex4(json.AsSpan(i + 8, 4), out ushort low) &&
+                    char.IsHighSurrogate((char)high) &&
+                    char.IsLowSurrogate((char)low))
+                {
+                    sb.Append((char)high);
+                    sb.Append((char)low);
+                    i += 12;
+                    continue;
+                }
+
+                // Consume escape sequence atomically so "\\" does not masquerade as "\u...".
+                sb.Append(c);
+                sb.Append(json[i + 1]);
+                i += 2;
+                continue;
+            }
+
+            sb.Append(c);
+            i++;
+        }
+
+        return sb.ToString();
+    }
+
+    private static bool TryParseHex4(ReadOnlySpan<char> hex, out ushort value)
+    {
+        value = 0;
+        if (hex.Length != 4)
+        {
+            return false;
+        }
+
+        return ushort.TryParse(
+            hex,
+            System.Globalization.NumberStyles.AllowHexSpecifier,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out value);
     }
 }

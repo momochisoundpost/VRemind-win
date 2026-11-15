@@ -151,6 +151,26 @@ public sealed class ChannelOrderTests
     }
 
     [Fact]
+    public void ReorderChannelsJson_PreservesNonAsciiUtf8CharactersUnescaped()
+    {
+        const string inputJson = """
+        [
+          { "id": "youtube:@first", "platform": "youtube", "name": "兎田ぺこら 🎉", "handle": "@first" },
+          { "id": "youtube:@second", "platform": "youtube", "name": "Caitlyn & Co", "handle": "@second" }
+        ]
+        """;
+
+        string outputJson = ChannelOrderPolicy.ReorderChannelsJson(
+            inputJson,
+            ["youtube:@second", "youtube:@first"]);
+
+        Assert.Contains("兎田ぺこら 🎉", outputJson);
+        Assert.Contains("Caitlyn & Co", outputJson);
+        Assert.DoesNotContain("\\u514E", outputJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\\u0026", outputJson, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void ReorderChannelsJson_ReturnsOriginalJsonWhenInvalidOrNotArray()
     {
         Assert.Equal("not json", ChannelOrderPolicy.ReorderChannelsJson("not json", ["youtube:@a"]));
@@ -183,6 +203,60 @@ public sealed class ChannelOrderTests
             """);
 
             ChannelOrderPolicy.PersistSectionOrder(tempDir, ["youtube:@second", "youtube:@first"]);
+
+            var reordered = JsonNode.Parse(File.ReadAllText(channelsPath))!.AsArray();
+            Assert.Equal("youtube:@second", reordered[0]!["id"]!.GetValue<string>());
+            Assert.Equal("youtube:@first", reordered[1]!["id"]!.GetValue<string>());
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task PersistSectionOrder_WaitsAndRetriesWhenLockTemporarilyHeld()
+    {
+        string tempDir = Path.Combine(Path.GetTempPath(), "vremind-lock-test-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(tempDir);
+            string channelsPath = Path.Combine(tempDir, "channels.json");
+            string lockPath = Path.Combine(tempDir, ".vremind.lock");
+
+            File.WriteAllText(channelsPath, """
+            [
+              { "id": "youtube:@first", "platform": "youtube", "name": "First", "handle": "@first" },
+              { "id": "youtube:@second", "platform": "youtube", "name": "Second", "handle": "@second" }
+            ]
+            """);
+
+            using var holderStream = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+            holderStream.Lock(0, 1);
+            bool unlocked = false;
+            try
+            {
+                var persistTask = Task.Run(() =>
+                    ChannelOrderPolicy.PersistSectionOrder(tempDir, ["youtube:@second", "youtube:@first"]));
+
+                await Task.Delay(80);
+                Assert.False(persistTask.IsCompleted);
+
+                holderStream.Unlock(0, 1);
+                unlocked = true;
+
+                await persistTask.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+            finally
+            {
+                if (!unlocked)
+                {
+                    try { holderStream.Unlock(0, 1); } catch { }
+                }
+            }
 
             var reordered = JsonNode.Parse(File.ReadAllText(channelsPath))!.AsArray();
             Assert.Equal("youtube:@second", reordered[0]!["id"]!.GetValue<string>());
