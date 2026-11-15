@@ -25,6 +25,11 @@
                     ToolTipService.ToolTip="{x:Bind TooltipText}"
                     PointerEntered="ChannelRow_PointerEntered"
                     PointerExited="ChannelRow_PointerExited"
+                    PointerPressed="ChannelRow_PointerPressed"
+                    PointerMoved="ChannelRow_PointerMoved"
+                    PointerReleased="ChannelRow_PointerReleased"
+                    PointerCanceled="ChannelRow_PointerCanceled"
+                    PointerCaptureLost="ChannelRow_PointerCaptureLost"
                     Tapped="ChannelRow_Tapped">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -271,6 +276,8 @@
                             FontWeight="Bold"
                             Foreground="{x:Bind ViewModel.IsLiveSectionCelebrating, Mode=OneWay, Converter={StaticResource CelebrationLiveHeaderBrushConverter}}" />
                         <ItemsControl
+                            x:Name="LiveItemsControl"
+                            Tag="live"
                             ItemsSource="{x:Bind ViewModel.LiveChannels, Mode=OneWay}"
                             ItemTemplate="{StaticResource ChannelRowTemplate}" />
                     </StackPanel>
@@ -286,6 +293,8 @@
                             FontWeight="Bold"
                             Foreground="{x:Bind ViewModel.IsUpcomingSectionCelebrating, Mode=OneWay, Converter={StaticResource CelebrationUpcomingHeaderBrushConverter}}" />
                         <ItemsControl
+                            x:Name="UpcomingItemsControl"
+                            Tag="upcoming"
                             ItemsSource="{x:Bind ViewModel.UpcomingChannels, Mode=OneWay}"
                             ItemTemplate="{StaticResource ChannelRowTemplate}" />
                     </StackPanel>
@@ -301,6 +310,8 @@
                             FontWeight="Bold"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         <ItemsControl
+                            x:Name="OfflineItemsControl"
+                            Tag="offline"
                             ItemsSource="{x:Bind ViewModel.OfflineChannels, Mode=OneWay}"
                             ItemTemplate="{StaticResource ChannelRowTemplate}" />
                     </StackPanel>
