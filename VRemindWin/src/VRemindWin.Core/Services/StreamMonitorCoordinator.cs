@@ -12,6 +12,7 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
     private readonly IToastNotificationDispatcher _toastDispatcher;
     private readonly TimeSpan _pollInterval;
     private readonly Action<Action>? _uiDispatcher;
+    private readonly Func<DateTimeOffset> _clock;
     private readonly object _syncLock = new();
 
     private PeriodicTimer? _pollTimer;
@@ -20,6 +21,8 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
     private Task? _inFlightRefreshTask;
     private bool _needsAnotherRefresh;
     private long _statusEpoch;
+    private DateOnly? _dailyOrderDate;
+    private List<string>? _dailyOrderedIds;
     private bool _disposed;
 
     private CliStateEnvelope _currentState = CliStateEnvelope.Empty;
@@ -30,12 +33,14 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
         ICoreCliBridge bridge,
         IToastNotificationDispatcher toastDispatcher,
         TimeSpan? pollInterval = null,
-        Action<Action>? uiDispatcher = null)
+        Action<Action>? uiDispatcher = null,
+        Func<DateTimeOffset>? clock = null)
     {
         _bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
         _toastDispatcher = toastDispatcher ?? throw new ArgumentNullException(nameof(toastDispatcher));
         _pollInterval = pollInterval ?? DefaultPollInterval;
         _uiDispatcher = uiDispatcher;
+        _clock = clock ?? (() => DateTimeOffset.Now);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -84,7 +89,7 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
         var response = await _bridge.GetStateAsync(ct).ConfigureAwait(false);
         if (response.State is not null)
         {
-            CurrentState = response.State;
+            CurrentState = ProjectIncomingState(response.State);
         }
     }
 
@@ -142,7 +147,7 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
         if (response.State is not null)
         {
             Interlocked.Increment(ref _statusEpoch);
-            CurrentState = response.State;
+            CurrentState = ProjectIncomingState(response.State);
             DispatchNotificationsSafely(response.State.Notifications);
         }
         return response;
@@ -154,8 +159,38 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
         var response = await _bridge.RemoveChannelAsync(channelId, ct).ConfigureAwait(false);
         if (response.State is not null)
         {
-            CurrentState = response.State;
+            CurrentState = ProjectIncomingState(response.State);
         }
+    }
+
+    public async Task ReorderSectionAsync(
+        string sectionKind,
+        int fromIndex,
+        int toIndex,
+        CancellationToken ct = default)
+    {
+        IReadOnlyList<CliChannelItem> reorderedSection;
+        lock (_syncLock)
+        {
+            var section = GetSectionItems(CurrentState, sectionKind);
+            if (fromIndex < 0 || fromIndex >= section.Count ||
+                toIndex < 0 || toIndex >= section.Count ||
+                fromIndex == toIndex)
+            {
+                return;
+            }
+
+            reorderedSection = ChannelOrderPolicy.ReorderSectionItems(section, fromIndex, toIndex);
+            var nextState = ChannelOrderPolicy.ApplySectionOrder(CurrentState, sectionKind, reorderedSection);
+            _dailyOrderDate = DateOnly.FromDateTime(_clock().LocalDateTime);
+            _dailyOrderedIds = CollectOrderedIds(nextState);
+            Interlocked.Increment(ref _statusEpoch);
+            CurrentState = nextState;
+        }
+
+        await _bridge.ReorderChannelsAsync(
+            reorderedSection.Select(c => c.Id).ToList(),
+            ct).ConfigureAwait(false);
     }
 
     public async Task UpdateSettingsAsync(AppSettingsDto settings, CancellationToken ct = default)
@@ -163,7 +198,7 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
         var response = await _bridge.UpdateSettingsAsync(settings, ct).ConfigureAwait(false);
         if (response.State is not null)
         {
-            CurrentState = response.State;
+            CurrentState = ProjectIncomingState(response.State);
         }
     }
 
@@ -177,7 +212,7 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
         if (response.State is not null)
         {
             Interlocked.Increment(ref _statusEpoch);
-            CurrentState = response.State;
+            CurrentState = ProjectIncomingState(response.State);
         }
         return response;
     }
@@ -185,10 +220,11 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
     public async Task<CliCommandResponse> ResetFactoryDefaultsAsync(CancellationToken ct = default)
     {
         Interlocked.Increment(ref _statusEpoch);
+        ClearDailyOrderProjection();
         var response = await _bridge.ResetFactoryDefaultsAsync(ct).ConfigureAwait(false);
         if (response.State is not null)
         {
-            CurrentState = response.State;
+            CurrentState = ProjectIncomingState(response.State);
         }
         return response;
     }
@@ -198,7 +234,7 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
         var response = await _bridge.ExportBackupAsync(filePath, ct).ConfigureAwait(false);
         if (response.State is not null)
         {
-            CurrentState = response.State;
+            CurrentState = ProjectIncomingState(response.State);
         }
         return response;
     }
@@ -209,10 +245,11 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
     public async Task<CliCommandResponse> RestoreBackupAsync(string filePath, CancellationToken ct = default)
     {
         Interlocked.Increment(ref _statusEpoch);
+        ClearDailyOrderProjection();
         var response = await _bridge.RestoreBackupAsync(filePath, ct).ConfigureAwait(false);
         if (response.State is not null)
         {
-            CurrentState = response.State;
+            CurrentState = ProjectIncomingState(response.State);
         }
         return response;
     }
@@ -222,7 +259,7 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
         var response = await _bridge.CheckForUpdatesAsync(manual, ct).ConfigureAwait(false);
         if (response.State is not null)
         {
-            CurrentState = response.State;
+            CurrentState = ProjectIncomingState(response.State);
         }
         return response;
     }
@@ -284,7 +321,7 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
                 {
                     if (Interlocked.Read(ref _statusEpoch) == passEpoch)
                     {
-                        CurrentState = response.State;
+                        CurrentState = ProjectIncomingState(response.State);
                         DispatchNotificationsSafely(response.State.Notifications);
                     }
                     else
@@ -292,7 +329,7 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
                         var fresh = await _bridge.GetStateAsync(ct).ConfigureAwait(false);
                         if (fresh.State is not null)
                         {
-                            CurrentState = fresh.State;
+                            CurrentState = ProjectIncomingState(fresh.State);
                             var activeUrls = CollectActiveWatchUrls(fresh.State);
                             var filteredNotifications = response.State.Notifications
                                 .Where(n => IsNotificationStillRelevant(n, activeUrls))
@@ -419,6 +456,59 @@ public sealed class StreamMonitorCoordinator : INotifyPropertyChanged, IDisposab
         _pollTimer?.Dispose();
         _pollTimer = null;
         _pollLoopTask = null;
+    }
+
+    private CliStateEnvelope ProjectIncomingState(CliStateEnvelope state)
+    {
+        IReadOnlyList<string>? customIdsSnapshot = null;
+        lock (_syncLock)
+        {
+            if (_dailyOrderDate is { } orderDate && _dailyOrderedIds is { Count: > 0 })
+            {
+                var today = DateOnly.FromDateTime(_clock().LocalDateTime);
+                if (today == orderDate)
+                {
+                    customIdsSnapshot = _dailyOrderedIds.ToList();
+                }
+                else
+                {
+                    _dailyOrderDate = null;
+                    _dailyOrderedIds = null;
+                }
+            }
+        }
+
+        return customIdsSnapshot is not null
+            ? ChannelOrderPolicy.ApplyCustomOrder(state, customIdsSnapshot)
+            : state;
+    }
+
+    private void ClearDailyOrderProjection()
+    {
+        lock (_syncLock)
+        {
+            _dailyOrderDate = null;
+            _dailyOrderedIds = null;
+        }
+    }
+
+    private static IReadOnlyList<CliChannelItem> GetSectionItems(CliStateEnvelope state, string sectionKind)
+        => sectionKind.ToLowerInvariant() switch
+        {
+            "live" => state.Sections.Live,
+            "upcoming" => state.Sections.Upcoming,
+            "offline" => state.Sections.Offline,
+            _ => []
+        };
+
+    private static List<string> CollectOrderedIds(CliStateEnvelope state)
+    {
+        var ids = new List<string>(
+            state.Sections.Live.Count + state.Sections.Upcoming.Count + state.Sections.Offline.Count);
+        foreach (var c in state.Sections.Live) ids.Add(c.Id);
+        foreach (var c in state.Sections.Upcoming) ids.Add(c.Id);
+        foreach (var c in state.Sections.Offline) ids.Add(c.Id);
+        return ids;
     }
 
     private void RaisePropertyChanged([CallerMemberName] string? propertyName = null)

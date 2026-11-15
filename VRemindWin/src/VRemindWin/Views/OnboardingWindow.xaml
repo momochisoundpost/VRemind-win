@@ -3,13 +3,28 @@
     x:Class="VRemindWin.Views.OnboardingWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:VRemindWin.Views.Controls"
     xmlns:helpers="using:VRemindWin.Helpers"
     Title="Welcome to VRemind">
 
     <Grid
-        Padding="24,20"
-        RowSpacing="14"
-        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+        x:Name="WindowChromeRoot"
+        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+        BackgroundSizing="OuterBorderEdge">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <controls:UwpTitleBarControl
+            x:Name="WindowTitleBar"
+            Grid.Row="0"
+            TitleText="Welcome to VRemind" />
+
+        <Grid
+            Grid.Row="1"
+            Padding="24,8,24,20"
+            RowSpacing="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -170,5 +185,6 @@
             FontWeight="SemiBold"
             Style="{ThemeResource AccentButtonStyle}"
             Click="GetStarted_Click" />
+        </Grid>
     </Grid>
 </Window>

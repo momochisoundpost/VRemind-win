@@ -185,6 +185,9 @@ public sealed class PopoverViewModel : INotifyPropertyChanged
     public Task RemoveChannelAsync(string channelId)
         => _coordinator.RemoveChannelAsync(channelId);
 
+    public Task ReorderSectionAsync(string sectionKind, int fromIndex, int toIndex)
+        => _coordinator.ReorderSectionAsync(sectionKind, fromIndex, toIndex);
+
     public Task RefreshCommandAsync()
         => _coordinator.RefreshAllAsync();
 

@@ -7,9 +7,23 @@
     Title="Software Update">
 
     <Grid
-        Padding="20,16"
-        RowSpacing="12"
-        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+        x:Name="WindowChromeRoot"
+        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+        BackgroundSizing="OuterBorderEdge">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <controls:UwpTitleBarControl
+            x:Name="WindowTitleBar"
+            Grid.Row="0"
+            TitleText="Software Update" />
+
+        <Grid
+            Grid.Row="1"
+            Padding="20,8,20,16"
+            RowSpacing="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -94,6 +108,7 @@
                 Content="Download Update"
                 Style="{ThemeResource AccentButtonStyle}"
                 Click="DownloadUpdateButton_Click" />
+        </Grid>
         </Grid>
     </Grid>
 </Window>

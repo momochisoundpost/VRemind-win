@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using VRemindWin.Core.Models;
 using VRemindWin.Core.Services;
 using VRemindWin.Core.ViewModels;
+using VRemindWin.Helpers;
 using VRemindWin.Services;
 using Windows.Graphics;
 using WinRT.Interop;
@@ -20,6 +21,7 @@ public sealed partial class SettingsWindow : Window
 {
     private readonly IntPtr _hwnd;
     private readonly AppWindow _appWindow;
+    private readonly UwpWindowChromeController _chromeController;
     private readonly Action<Uri> _onOpenUri;
     private readonly Action<CliReleaseDto> _onOpenUpdateWindow;
     private readonly VRemindWin.Core.Services.CalibrationTapAccumulator _tapAccumulator = new();
@@ -58,12 +60,13 @@ public sealed partial class SettingsWindow : Window
             AboutIconImage.Source = new BitmapImage(new Uri(pngIconPath));
         }
 
-        if (_appWindow.Presenter is OverlappedPresenter presenter)
-        {
-            presenter.IsResizable = false;
-            presenter.IsMaximizable = false;
-            presenter.IsMinimizable = false;
-        }
+        _chromeController = new UwpWindowChromeController(
+            window: this,
+            hwnd: _hwnd,
+            appWindow: _appWindow,
+            chromeBorderGrid: WindowChromeRoot,
+            titleBar: WindowTitleBar,
+            isResizable: false);
 
         uint dpi = GetDpiForWindow(_hwnd);
         double scale = dpi == 0 ? 1.0 : dpi / 96.0;
@@ -76,6 +79,7 @@ public sealed partial class SettingsWindow : Window
             _tapAccumulator.Reset();
             ViewModel.OnShowUpdateWindow = null;
             ViewModel.OnShowEasterEggAlertAsync = null;
+            _chromeController.Dispose();
             Bindings.StopTracking();
         };
     }
@@ -84,7 +88,9 @@ public sealed partial class SettingsWindow : Window
 
     public void ShowAndFocus()
     {
+        _chromeController.EnsureChromeStyles();
         _appWindow.Show(activateWindow: true);
+        _chromeController.EnsureChromeStyles();
         Activate();
         _ = SetForegroundWindow(_hwnd);
     }

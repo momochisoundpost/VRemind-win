@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using VRemindWin.Core.ViewModels;
+using VRemindWin.Helpers;
 using Windows.Graphics;
 using WinRT.Interop;
 
@@ -14,6 +15,7 @@ public sealed partial class OnboardingWindow : Window
 {
     private readonly IntPtr _hwnd;
     private readonly AppWindow _appWindow;
+    private readonly UwpWindowChromeController _chromeController;
 
     public OnboardingWindow(OnboardingViewModel viewModel)
     {
@@ -37,12 +39,13 @@ public sealed partial class OnboardingWindow : Window
             AppIconImage.Source = new BitmapImage(new Uri(pngIconPath));
         }
 
-        if (_appWindow.Presenter is OverlappedPresenter presenter)
-        {
-            presenter.IsResizable = false;
-            presenter.IsMaximizable = false;
-            presenter.IsMinimizable = false;
-        }
+        _chromeController = new UwpWindowChromeController(
+            window: this,
+            hwnd: _hwnd,
+            appWindow: _appWindow,
+            chromeBorderGrid: WindowChromeRoot,
+            titleBar: WindowTitleBar,
+            isResizable: false);
 
         uint dpi = GetDpiForWindow(_hwnd);
         double scale = dpi == 0 ? 1.0 : dpi / 96.0;
@@ -50,14 +53,20 @@ public sealed partial class OnboardingWindow : Window
             (int)Math.Round(460 * scale),
             (int)Math.Round(520 * scale)));
 
-        Closed += (_, _) => Bindings.StopTracking();
+        Closed += (_, _) =>
+        {
+            _chromeController.Dispose();
+            Bindings.StopTracking();
+        };
     }
 
     public OnboardingViewModel ViewModel { get; }
 
     public void ShowAndFocus()
     {
+        _chromeController.EnsureChromeStyles();
         _appWindow.Show(activateWindow: true);
+        _chromeController.EnsureChromeStyles();
         Activate();
         _ = SetForegroundWindow(_hwnd);
     }
