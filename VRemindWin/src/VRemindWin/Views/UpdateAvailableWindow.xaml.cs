@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
 using VRemindWin.Core.Models;
 using VRemindWin.Core.Services;
+using VRemindWin.Helpers;
 using Windows.Graphics;
 using WinRT.Interop;
 
@@ -14,6 +15,7 @@ public sealed partial class UpdateAvailableWindow : Window
 {
     private readonly IntPtr _hwnd;
     private readonly AppWindow _appWindow;
+    private readonly UwpWindowChromeController _chromeController;
     private readonly Action<Uri> _onOpenUri;
     private readonly Func<string, Task> _onSkipVersion;
     private CliReleaseDto _release;
@@ -47,12 +49,13 @@ public sealed partial class UpdateAvailableWindow : Window
             HeaderIconImage.Source = new BitmapImage(new Uri(pngIconPath));
         }
 
-        if (_appWindow.Presenter is OverlappedPresenter presenter)
-        {
-            presenter.IsResizable = true;
-            presenter.IsMaximizable = false;
-            presenter.IsMinimizable = false;
-        }
+        _chromeController = new UwpWindowChromeController(
+            window: this,
+            hwnd: _hwnd,
+            appWindow: _appWindow,
+            chromeBorderGrid: WindowChromeRoot,
+            titleBar: WindowTitleBar,
+            isResizable: true);
 
         uint dpi = GetDpiForWindow(_hwnd);
         double scale = dpi == 0 ? 1.0 : dpi / 96.0;
@@ -64,6 +67,7 @@ public sealed partial class UpdateAvailableWindow : Window
 
         Closed += (_, _) =>
         {
+            _chromeController.Dispose();
             MarkdownViewer.CleanupMediaPlayers();
         };
     }
@@ -74,6 +78,7 @@ public sealed partial class UpdateAvailableWindow : Window
 
         var chrome = UpdateWindowChromePolicy.Resolve(release);
         _appWindow.Title = chrome.WindowTitle;
+        WindowTitleBar.TitleText = chrome.WindowTitle;
         TitleTextBlock.Text = chrome.HeaderTitle;
         SubtitleTextBlock.Text = $"You are currently running VRemind v{currentVersion}. Here's what's new:";
         SubtitleTextBlock.Visibility = chrome.ShowSubtitle ? Visibility.Visible : Visibility.Collapsed;
@@ -89,7 +94,9 @@ public sealed partial class UpdateAvailableWindow : Window
 
     public void ShowAndFocus()
     {
+        _chromeController.EnsureChromeStyles();
         _appWindow.Show(activateWindow: true);
+        _chromeController.EnsureChromeStyles();
         Activate();
         _ = SetForegroundWindow(_hwnd);
     }

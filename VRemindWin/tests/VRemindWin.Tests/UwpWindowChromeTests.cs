@@ -41,6 +41,24 @@ public sealed class UwpWindowChromeTests
         Assert.NotEqual(0L, newExStyle & WsExAppWindow);
     }
 
+    [Fact]
+    public void StripStandardWindowFrameStyles_PreservesThickFrameWhenResizable()
+    {
+        const long observedStyle = WsVisible | WsClipSiblings | WsCaption | WsThickFrame | WsSysMenu | WsMinimizeBox | WsMaximizeBox;
+        const long observedExStyle = WsExDlgModalFrame | WsExWindowEdge | WsExClientEdge | WsExStaticEdge | WsExToolWindow | WsExAppWindow;
+
+        var (newStyle, newExStyle) = UwpWindowChromePolicy.StripStandardWindowFrameStyles(
+            observedStyle,
+            observedExStyle,
+            preserveResizeFrame: true);
+
+        Assert.Equal(0L, newStyle & (WsCaption | WsMinimizeBox | WsMaximizeBox | WsPopup));
+        Assert.NotEqual(0L, newStyle & WsThickFrame);
+        Assert.NotEqual(0L, newStyle & WsSysMenu);
+        Assert.Equal(0L, newExStyle & (WsExDlgModalFrame | WsExWindowEdge | WsExClientEdge | WsExStaticEdge | WsExToolWindow));
+        Assert.NotEqual(0L, newExStyle & WsExAppWindow);
+    }
+
     [Theory]
     [InlineData(17763, true, true, true, false, 1.0, UwpWindowChromePolicy.DarkActiveBorderColorRef)]
     [InlineData(19044, true, true, false, false, 1.0, UwpWindowChromePolicy.DarkInactiveBorderColorRef)]

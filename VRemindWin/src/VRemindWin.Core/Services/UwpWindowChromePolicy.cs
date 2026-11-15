@@ -64,10 +64,18 @@ public static class UwpWindowChromePolicy
     public static bool IsWindows11OrGreater(int windowsBuildNumber)
         => windowsBuildNumber >= 22000;
 
-    public static (long Style, long ExStyle) StripStandardWindowFrameStyles(long currentStyle, long currentExStyle)
+    public static (long Style, long ExStyle) StripStandardWindowFrameStyles(
+        long currentStyle,
+        long currentExStyle,
+        bool preserveResizeFrame = false)
     {
         // Preserve WS_SYSMENU and avoid adding WS_EX_TOOLWINDOW so standard windows remain in taskbar/Alt+Tab.
-        long normalizedStyle = currentStyle & ~FrameStyleMask;
+        // Resizable windows retain WS_THICKFRAME (with WM_NCCALCSIZE = 0 hiding the visual frame) so DefWindowProc
+        // allows native WM_NCLBUTTONDOWN edge/corner resizing.
+        long styleMask = preserveResizeFrame ? FrameStyleMask & ~WsThickFrame : FrameStyleMask;
+        long normalizedStyle = preserveResizeFrame
+            ? (currentStyle & ~styleMask) | WsThickFrame
+            : currentStyle & ~styleMask;
         long normalizedExStyle = currentExStyle & ~FrameExStyleMask;
         return (normalizedStyle, normalizedExStyle);
     }
