@@ -9,9 +9,16 @@
   <a href="https://learn.microsoft.com/windows/apps/winui/winui3/"><img src="https://img.shields.io/badge/UI-WinUI%203%20%2F%20.NET%209-512BD4?logo=dotnet" alt="UI: WinUI 3 / .NET 9"></a>
   <a href="https://github.com/momochisoundpost/VRemindCore"><img src="https://img.shields.io/badge/Engine-Swift%20VRemindCore-F05138?logo=swift" alt="Engine: Swift VRemindCore"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green" alt="License: MIT"></a>
+  <a href="#running-tests"><img src="https://img.shields.io/badge/Tests-94%20.NET%20%2B%2011%20CLI%20%2B%2069%20Core%20Passing-success" alt="Tests: 94 .NET + 11 CLI + 69 Core Passing"></a>
 </p>
 
 A native Windows 10 (1809 LTSC and newer) & Windows 11 system tray VTuber stream reminder built with **WinUI 3** and powered by [`VRemindCore`](https://github.com/momochisoundpost/VRemindCore) in Swift as a drop-in Lego-piece engine.
+
+> [!TIP]
+> **Looking for the Mac version?** Check out [**VRemind for macOS (`VRemind`)**](https://github.com/momochisoundpost/VRemind) — the original native **macOS 12.0+ (Monterey and newer)** menu bar app and **WidgetKit** desktop widgets coded 100% in Swift (SwiftUI & AppKit) with zero third-party dependencies!
+
+> [!NOTE]
+> **Maintenance Mode:** With [`VRemindCore`](https://github.com/momochisoundpost/VRemindCore) cleanly separated and `VRemind-win` now solid (even pulling ahead of the original Mac build with drag-to-reorder watchlists and 100% Win32-free UWP window chrome), **`VRemind-win` is entering maintenance mode** — future updates will focus on syncing `VRemindCore` and fixing upstream breakage (mostly because YouTube keeps changing things to keep their product managers employed). No new features are planned unless someone contributes one via PR or manages to scrape **Kick.com** without API keys.
 
 > [!NOTE]
 > **Escaping the Californian Walled Garden & Moving Out to Seattle:** After building [`VRemind`](https://github.com/momochisoundpost/VRemind) in the sunny Cupertino walled garden—where a hobby menu bar utility gets treated like contraband unless you pay a $99/year landlord fee—VRemind has packed its bags, left California, and moved out to rainy Seattle. No Microsoft Store lock-in, no MSIX certificate headaches, and first-class support for Windows 10 LTSC boxes that refuse to die.
@@ -34,11 +41,12 @@ VRemind sits quietly in your Windows system tray (notification area), monitors y
 
 ---
 
-## Key Features (v1.3.1 Feature Parity)
+## Key Features
 
-- **Drop-In `VRemindCore` Engine (YouTube & Twitch)**:
+- **Drop-In `VRemindCore` Engine & Drag-to-Reorder Watchlist (YouTube & Twitch)**:
   - Powered directly by [`VRemindCore`](https://github.com/momochisoundpost/VRemindCore) compiled natively for Windows (`vremind-core.exe`).
   - Add any VTuber or creator by YouTube `@handle` (e.g. `@bukancaitlyn`, `@filian`, `@ironmouse`) or Twitch username (`ironmouse`), or paste a full `youtube.com` / `twitch.tv` URL for automatic platform detection.
+  - **Drag-to-Reorder**: Click and drag any channel row up or down within its section (`LIVE NOW`, `UPCOMING`, or `OFFLINE`) to arrange your favorites in the exact order you want.
   - Platform dropdown on the left of the input bar with color-coded badges (red for YouTube, purple for Twitch) so creators on both platforms stay clearly separated.
   - Pre-seeded with **Caitlyn Momochi** ([@bukancaitlyn](https://www.youtube.com/@bukancaitlyn)) on YouTube as the default starter channel (fully editable and removable).
 
@@ -56,8 +64,9 @@ VRemind sits quietly in your Windows system tray (notification area), monitors y
   - Renders vsync-locked confetti rain via `CompositionTarget.Rendering` and GPU-backed `CompositeTransform` on the DirectX 10 (`D3D_FEATURE_LEVEL_10_0`) DirectComposition layer with zero CPU layout passes per frame and zero idle CPU/GPU usage when the flyout is closed.
   - Animates calm 2-color shifting-hue rainbow gradients (`6.0s` normal cycle, `36.0s` under **Reduce Motion**) across celebrating badges, avatar rings, time labels, and section headers while disabling confetti rain when **Reduce Motion** is enabled.
 
-- **Native WinUI 3 Taskbar Flyout (`360×440` DIP) & First-Run Onboarding**:
+- **100% Win32-Free UWP Window Chrome, Taskbar Flyout (`360×440` DIP) & First-Run Onboarding**:
   - Left-clicking the tray icon toggles a borderless, DPI-aware `360×440` WinUI 3 flyout anchored cleanly above the Windows taskbar that auto-dismisses when focus is lost.
+  - Every window in the app (`PopoverWindow`, `SettingsWindow`, `OnboardingWindow`, and `UpdateAvailableWindow`) uses seamless UWP chrome with a matching dark/light title bar, a single `✕` close button, crisp `1px` borders on Windows 10 (including Aero Lite), and native DWM rounded corners on Windows 11 — zero legacy Win32 title bars or grayed-out Minimize/Maximize buttons.
   - Right-clicking the tray icon opens a quick native context menu (`Open VRemind`, `Refresh Now`, `Settings...`, `Quit VRemind`).
   - First-run **Onboarding Wizard** (`OnboardingWindow`) lets you pick your first creator, verify Windows toast notifications, and configure software update checks.
 
@@ -114,13 +123,18 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-app.ps1
 1. **System Tray Status**: Look for the VRemind antenna icon in your Windows system tray (click the `^` overflow chevron and drag it onto the taskbar if Windows hides new icons). If any watched channel goes live, the icon turns solid red.
 2. **Add a Creator**: Left-click the tray icon to open the flyout popover, choose **YouTube** or **Twitch** from the left dropdown, enter a handle/username (e.g. `@bukancaitlyn`, `ironmouse`) or paste a channel URL, and press Enter or click **Add**.
 3. **Watch a Stream**: Click on any channel row or Windows toast notification to open the stream directly in your default browser.
-4. **Remove a Channel**: Hover over a channel row and click the trash can icon.
-5. **Settings**: Click the gear icon (`⚙`) in the popover header or right-click the tray icon and select **Settings...** to customize notifications and launch-at-login behavior.
-6. **Quit**: Click the power icon (`⏻`) in the popover header or right-click the tray icon and select **Quit VRemind**.
+4. **Reorder Channels**: Click and drag any channel row up or down within `LIVE NOW`, `UPCOMING`, or `OFFLINE` to put your favorites at the top.
+5. **Remove a Channel**: Hover over a channel row and click the trash can icon.
+6. **Settings**: Click the gear icon (`⚙`) in the popover header or right-click the tray icon and select **Settings...** to customize notifications and launch-at-login behavior.
+7. **Quit**: Click the power icon (`⏻`) in the popover header or right-click the tray icon and select **Quit VRemind**.
 
 ---
 
 ## Frequently Asked Questions (FAQ)
+
+### Is there a macOS or Linux build?
+- **macOS — Yes!** [**`VRemind`**](https://github.com/momochisoundpost/VRemind) is the original native **macOS 12.0+ (Monterey and newer)** Universal (`arm64` + `x86_64`) menu bar app built 100% in Swift with SwiftUI, AppKit, and native **WidgetKit** desktop widgets (`Small Hero`, `Medium Watchlist`, `Large Dashboard`) with zero third-party dependencies. Your JSON backups (`vremind-backup-YYYY-MM-DD.json`) are 100% interchangeable between macOS and Windows.
+- **Linux — Not officially yet, but `VRemindCore` is ready.** Starting with **1.3 ("Better Together")**, the platform-agnostic business engine ([`VRemindCore`](https://github.com/momochisoundpost/VRemindCore)) lives in its own Swift package repository using only `Foundation` and `FoundationNetworking` — so it can run anywhere Swift runs as a clean blueprint for KDE Plasma, GNOME, or Linux tray ports. Check [`momochisoundpost/VRemindCore`](https://github.com/momochisoundpost/VRemindCore) if you want to build on top of it!
 
 ### Why are you supporting Windows 10 1809 (LTSC 2019) and 21H2 (IoT LTSC 2021)?
 Because on the Mac side I refused to drop macOS 12 Monterey for OCLP and glowing-Apple-logo MacBook users, and on the Seattle side **I will never drop support for something Microsoft still supports**. Windows 10 Enterprise LTSC 2019 (1809, build `17763`) is supported until 2029, and Windows 10 IoT Enterprise LTSC 2021 (21H2, build `19044`) is supported until 2032. LTSC machines strip out the Microsoft Store and consumer bloatware by design—so `VRemind-win` is built from day one as an **unpackaged** WinUI 3 app with a 1809-compatible COM toast pipeline that needs zero Store infrastructure.
@@ -145,8 +159,14 @@ On macOS, everything VRemind uses (`Swift`, `SwiftUI`, `AppKit`, `Foundation`, `
 - When Windows enters sleep or you lock your screen, polling pauses automatically and resumes when you return.
 - All watchlist and settings state lives in clean, human-readable JSON files under `%APPDATA%\VRemind\`.
 
+### Can I track creators who aren't VTubers?
+**Yes.** While VRemind was designed with VTubers in mind, you can monitor any YouTube or Twitch channel that livestreams by entering their handle/username (e.g. tech creators, podcasters, esports channels, gamers).
+
 ### Can I remove Caitlyn Momochi from my watchlist?
 **Yes.** Caitlyn Momochi is just the default starter channel so the list isn't blank on first launch. Hover over the channel row, click the trash can icon, and add whoever you like.
+
+### What if YouTube or Twitch changes its page or endpoint format?
+Because `VRemind-win` uses the modular parsers (`LivePageParser`, `TwitchResponseParser`) behind `StreamProvider` in [`VRemindCore`](https://github.com/momochisoundpost/VRemindCore), upstream platform changes can be updated cleanly in the shared Swift engine without touching Windows UI code. If a creator goes live and VRemind doesn't pick it up, please open an Issue or submit a Pull Request — the Windows app, companion CLI, and core engine are backed by automated unit tests (`94` in `VRemindWin.Tests`, `11` in `VRemindCoreCLITests`, and `69` in `VRemindCoreTests`).
 
 ---
 
@@ -214,6 +234,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\tests\verify-toolc
 
 - **Platform Notice**: VRemind is an independent open-source project and is not affiliated with, endorsed by, or associated with YouTube, Google LLC, Twitch Interactive, Inc., Apple Inc., or Microsoft Corporation.
 - **Public Scraping Notice**: VRemind checks streams using publicly accessible YouTube `/live` pages and public unauthenticated Twitch web queries without an API key. Upstream platforms may change their markup or payloads from time to time. If stream statuses or avatars fail to parse after a platform update, please open an issue or pull request.
+
+---
+
+## Contributing
+
+Contributions, bug reports, and suggestions are welcome!
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feat/my-new-feature`).
+3. Make sure the unit test suites pass (`dotnet test` and `swift test`).
+4. Commit your changes and open a Pull Request.
 
 ---
 
