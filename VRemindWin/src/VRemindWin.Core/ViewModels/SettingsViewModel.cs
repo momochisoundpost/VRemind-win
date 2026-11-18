@@ -81,7 +81,7 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     }
 
     public string CurrentVersion => string.IsNullOrWhiteSpace(_coordinator.CurrentState.AppVersion)
-        ? "1.3.3"
+        ? "1.3.6"
         : _coordinator.CurrentState.AppVersion;
 
     public string CurrentVersionText => $"Current Version: {CurrentVersion}";
@@ -304,20 +304,20 @@ public sealed class SettingsViewModel : INotifyPropertyChanged
     {
         const string markdown = """
             ### Release Notes
-            **The Windows port is now officially more capable than the original Mac app. I don't know how we got here either.**
+            **It's either a global holiday or another plague according to HR. Either way, I'm going on holiday.**
 
-            `v1.3.1` was supposed to just match the Mac version, and `v1.3.2` was supposed to just fix an ugly border. Naturally, `v1.3.3` escalates things by adding a feature the Mac version doesn't even have yet, while evicting the last remnants of 1995-era Win32 window frames from the rest of the app.
+            After 13 years of waiting, GTA 6 early gameplay streams are finally here — which legally qualifies as a global holiday on my calendar, even if HR keeps calling it "another plague." Since I'm mentally already out of office with streams open everywhere, `v1.3.6` turns VRemind Miami Vice purple so the tray celebrates while I pretend I'm unreachable.
 
             #### ✨ What's New
-            - [x] **Drag-to-Reorder Your Watchlist:** Click and drag any channel up or down inside `LIVE NOW`, `UPCOMING`, or `OFFLINE` so your list is no longer a permanent museum of the exact order you added people in.
-            - [x] **100% Win32-Free Window UI:** Replaced the blinding white Win32 title bars, tiny 16×16 corner icons, and grayed-out Minimize/Maximize buttons that existed solely to tell you "no" with a clean, seamless UWP frame and a single `✕` close button across every window.
+            - [x] **Miami Vice GTA 6 Live Takeover:** Live streams matching `GTA 6`, `GTA6`, `GTA VI`, `GTAVI`, or `Grand Theft Auto 6/VI` light up in `#8B5CF6` → `#D946EF` across row rings, badges, headers, and confetti (respecting Reduce Motion).
+            - [x] **Purple System Tray & Tooltip:** Switches to a `#A855F7` tray icon with `VRemind (Live now - GTA 6)` whenever a GTA 6 stream is live, then reverts cleanly when the stream ends.
 
             <video src="https://github.com/user-attachments/assets/vremind-win-parity-demo.mp4"></video>
             """;
 
         return new CliReleaseDto(
-            TagName: "v1.3.3",
-            Name: "The Windows port is now officially more capable than the original Mac app.",
+            TagName: "v1.3.6",
+            Name: "It's either a global holiday or another plague according to HR.",
             Body: markdown,
             HtmlURL: "https://github.com/momochisoundpost/VRemind-win",
             DownloadURL: "https://github.com/momochisoundpost/VRemind-win/releases");

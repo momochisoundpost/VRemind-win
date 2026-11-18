@@ -231,7 +231,7 @@ public partial class App : Application
                 return;
             }
 
-            var currentVersion = _settingsViewModel?.CurrentVersion ?? "1.3.3";
+            var currentVersion = _settingsViewModel?.CurrentVersion ?? "1.3.6";
             if (_updateAvailableWindow is null)
             {
                 _updateAvailableWindow = new UpdateAvailableWindow(

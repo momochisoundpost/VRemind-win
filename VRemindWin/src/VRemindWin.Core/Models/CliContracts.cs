@@ -112,7 +112,7 @@ public sealed record CliStateEnvelope(
     [property: JsonPropertyName("settings")] AppSettingsDto Settings,
     [property: JsonPropertyName("notifications")] IReadOnlyList<CliNotificationItem> Notifications,
     [property: JsonPropertyName("isPopoverCelebrating")] bool IsPopoverCelebrating = false,
-    [property: JsonPropertyName("appVersion")] string AppVersion = "1.3.3"
+    [property: JsonPropertyName("appVersion")] string AppVersion = "1.3.6"
 )
 {
     public static CliStateEnvelope Empty { get; } = new(
@@ -121,7 +121,7 @@ public sealed record CliStateEnvelope(
         Settings: AppSettingsDto.Default,
         Notifications: [],
         IsPopoverCelebrating: false,
-        AppVersion: "1.3.3"
+        AppVersion: "1.3.6"
     );
 }
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3.6] - 2026-11-17
+
+### Release Notes
+**It's either a global holiday or another plague according to HR. Either way, I'm going on holiday.**
+
+After 13 years of waiting, GTA 6 early gameplay streams are finally here — which legally qualifies as a global holiday on my calendar, even if HR keeps calling it "another plague" and sending passive-aggressive calendar reminders about PTO approval. Since I'm mentally already out of office with streams open on every monitor, `v1.3.6` turns VRemind Miami Vice purple so the tray can celebrate while I pretend I'm unreachable.
+
+### What's New
+- **Miami Vice GTA 6 Live Takeover:**
+  - Whenever a watched channel goes live with `GTA 6` (`GTA 6`, `GTA6`, `GTA VI`, `GTAVI`, `Grand Theft Auto 6`, or `Grand Theft Auto VI`) in its stream title, the live indicators switch to a Miami Vice purple gradient (`#8B5CF6` → `#D946EF`) across the streamer's avatar ring, `LIVE` pill, live timer, the popover's `N LIVE` badge, and the `LIVE NOW` section header.
+  - Automatically triggers the DirectX 10 confetti overlay while the popover is open (respecting **Reduce Motion**), and leaves `UPCOMING` streams untouched until they actually go live.
+- **Purple System Tray Icon & Holiday Tooltip:**
+  - Added a dedicated `#A855F7` purple tray antenna icon (`tray-gta6.ico`) with the tooltip `VRemind (Live now - GTA 6)` whenever a GTA 6 stream is live, reverting cleanly to standard red or idle once the broadcast ends.
+- **Zero `VRemindCore` Changes:**
+  - Detection and takeover styling live entirely in the Windows layer (`VRemindWin` / `VRemindWin.Core`), leaving `VRemindCore` untouched.
+
 ## [1.3.3] - 2026-11-14
 
 ### Release Notes
