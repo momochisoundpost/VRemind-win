@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using VRemindWin.Core.Services;
 
 namespace VRemindWin.Core.Models;
 
@@ -20,7 +21,8 @@ public sealed record CliChannelItem(
 {
     public bool IsLive => string.Equals(StatusKind, "live", StringComparison.OrdinalIgnoreCase);
     public bool IsUpcoming => string.Equals(StatusKind, "upcoming", StringComparison.OrdinalIgnoreCase);
-    public string EffectiveVisualKind => IsCelebration ? "celebration" : StatusKind;
+    public bool IsGta6Live => IsLive && Gta6Detector.IsMatch(StreamTitle);
+    public string EffectiveVisualKind => IsGta6Live ? "gta6" : IsCelebration ? "celebration" : StatusKind;
     public bool ShowStatusBadge => IsLive || (IsUpcoming && IsCelebration);
     public string StatusBadgeText => IsLive ? "LIVE" : "SOON";
     public bool HasStreamTitle => !string.IsNullOrWhiteSpace(StreamTitle);
