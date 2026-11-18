@@ -105,6 +105,7 @@ public sealed partial class PopoverView : UserControl
             e.PropertyName is nameof(PopoverViewModel.IsPopoverCelebrating)
                 or nameof(PopoverViewModel.ReduceMotion)
                 or nameof(PopoverViewModel.IsLiveSectionCelebrating)
+                or nameof(PopoverViewModel.IsLiveSectionGta6)
                 or nameof(PopoverViewModel.IsUpcomingSectionCelebrating))
         {
             UpdateCelebrationAnimationState();

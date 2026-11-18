@@ -17,8 +17,6 @@
             <helpers:StatusKindToTimeBrushConverter x:Key="StatusTimeBrushConverter" />
             <helpers:StatusKindToAvatarRingBrushConverter x:Key="StatusAvatarRingBrushConverter" />
             <helpers:StatusKindToBadgeBrushConverter x:Key="StatusBadgeBrushConverter" />
-            <helpers:CelebrationBadgeBrushConverter x:Key="CelebrationBadgeBrushConverter" />
-            <helpers:CelebrationLiveHeaderBrushConverter x:Key="CelebrationLiveHeaderBrushConverter" />
             <helpers:CelebrationUpcomingHeaderBrushConverter x:Key="CelebrationUpcomingHeaderBrushConverter" />
             <helpers:AvatarUriConverter x:Key="AvatarUriConverter" />
         </ResourceDictionary>

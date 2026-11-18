@@ -173,7 +173,7 @@
                 Padding="7,2"
                 CornerRadius="10"
                 VerticalAlignment="Center"
-                Background="{x:Bind ViewModel.IsLiveSectionCelebrating, Mode=OneWay, Converter={StaticResource CelebrationBadgeBrushConverter}}"
+                Background="{x:Bind ViewModel.LiveHeaderVisualKind, Mode=OneWay, Converter={StaticResource StatusBadgeBrushConverter}}"
                 Visibility="{x:Bind ViewModel.HasLiveChannels, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                     <Ellipse Width="6" Height="6" Fill="White" VerticalAlignment="Center" />
@@ -274,7 +274,7 @@
                             Margin="10,4,0,2"
                             FontSize="10.5"
                             FontWeight="Bold"
-                            Foreground="{x:Bind ViewModel.IsLiveSectionCelebrating, Mode=OneWay, Converter={StaticResource CelebrationLiveHeaderBrushConverter}}" />
+                            Foreground="{x:Bind ViewModel.LiveHeaderVisualKind, Mode=OneWay, Converter={StaticResource StatusTimeBrushConverter}}" />
                         <ItemsControl
                             x:Name="LiveItemsControl"
                             Tag="live"

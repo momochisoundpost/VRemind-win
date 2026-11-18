@@ -52,6 +52,46 @@ public static class RainbowGradientProvider
     }
 }
 
+/// <summary>
+/// Provides the static Miami Vice purple gradient brush for GTA 6 live indicators.
+/// </summary>
+public static class MiamiViceGradientProvider
+{
+    private static LinearGradientBrush? _sharedBrush;
+
+    public static LinearGradientBrush SharedBrush => _sharedBrush ??= CreateMiamiViceBrush();
+
+    private static LinearGradientBrush CreateMiamiViceBrush()
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0.0, 0.0),
+            EndPoint = new Point(1.0, 1.0)
+        };
+        brush.GradientStops.Add(new GradientStop { Color = Color.FromArgb(255, 0x8B, 0x5C, 0xF6), Offset = 0.0 });
+        brush.GradientStops.Add(new GradientStop { Color = Color.FromArgb(255, 0xD9, 0x46, 0xEF), Offset = 1.0 });
+        return brush;
+    }
+}
+
+internal static class StatusVisualBrushHelper
+{
+    internal static Brush? ResolveSharedGradient(string? status)
+    {
+        if (string.Equals(status, "gta6", StringComparison.OrdinalIgnoreCase))
+        {
+            return MiamiViceGradientProvider.SharedBrush;
+        }
+
+        if (string.Equals(status, "celebration", StringComparison.OrdinalIgnoreCase))
+        {
+            return RainbowGradientProvider.SharedBrush;
+        }
+
+        return null;
+    }
+}
+
 public sealed class BoolToVisibilityConverter : IValueConverter
 {
     public bool Invert { get; set; }
@@ -127,9 +167,9 @@ public sealed class StatusKindToTimeBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, string language)
     {
         var status = value as string;
-        if (string.Equals(status, "celebration", StringComparison.OrdinalIgnoreCase))
+        if (StatusVisualBrushHelper.ResolveSharedGradient(status) is { } shared)
         {
-            return RainbowGradientProvider.SharedBrush;
+            return shared;
         }
 
         if (string.Equals(status, "live", StringComparison.OrdinalIgnoreCase))
@@ -154,9 +194,9 @@ public sealed class StatusKindToAvatarRingBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, string language)
     {
         var status = value as string;
-        if (string.Equals(status, "celebration", StringComparison.OrdinalIgnoreCase))
+        if (StatusVisualBrushHelper.ResolveSharedGradient(status) is { } shared)
         {
-            return RainbowGradientProvider.SharedBrush;
+            return shared;
         }
 
         if (string.Equals(status, "live", StringComparison.OrdinalIgnoreCase))
@@ -181,9 +221,9 @@ public sealed class StatusKindToBadgeBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, string language)
     {
         var status = value as string;
-        if (string.Equals(status, "celebration", StringComparison.OrdinalIgnoreCase))
+        if (StatusVisualBrushHelper.ResolveSharedGradient(status) is { } shared)
         {
-            return RainbowGradientProvider.SharedBrush;
+            return shared;
         }
 
         if (string.Equals(status, "upcoming", StringComparison.OrdinalIgnoreCase))
@@ -193,28 +233,6 @@ public sealed class StatusKindToBadgeBrushConverter : IValueConverter
 
         return new SolidColorBrush(Color.FromArgb(255, 220, 38, 38));
     }
-
-    public object ConvertBack(object value, Type targetType, object parameter, string language)
-        => throw new NotSupportedException();
-}
-
-public sealed class CelebrationBadgeBrushConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, string language)
-        => value is true
-            ? RainbowGradientProvider.SharedBrush
-            : new SolidColorBrush(Color.FromArgb(255, 220, 38, 38));
-
-    public object ConvertBack(object value, Type targetType, object parameter, string language)
-        => throw new NotSupportedException();
-}
-
-public sealed class CelebrationLiveHeaderBrushConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, string language)
-        => value is true
-            ? RainbowGradientProvider.SharedBrush
-            : new SolidColorBrush(Color.FromArgb(255, 239, 68, 68));
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
         => throw new NotSupportedException();
