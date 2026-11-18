@@ -522,6 +522,126 @@ public sealed class CoordinatorAndViewModelTests
     }
 
     [Fact]
+    public async Task Gta6Live_SetsHeaderKindAndCelebrates()
+    {
+        var gta6Item = MakeChannel("youtube:@bukancaitlyn", "Caitlyn Momochi", "live") with
+        {
+            StreamTitle = "GTA 6 early gameplay"
+        };
+        var bridge = new StubCoreCliBridge
+        {
+            OnGetState = _ => Task.FromResult(MakeOkResponse(live: [gta6Item]))
+        };
+        using var coordinator = new StreamMonitorCoordinator(bridge, new FakeToastDispatcher(), TimeSpan.FromMinutes(3));
+        var vm = new PopoverViewModel(coordinator);
+
+        await coordinator.InitializeAsync();
+
+        Assert.True(vm.IsLiveSectionGta6);
+        Assert.Equal("gta6", vm.LiveHeaderVisualKind);
+        Assert.True(vm.IsPopoverCelebrating);
+    }
+
+    [Fact]
+    public async Task MixedLiveList_HeaderIsGta6_OtherRowStaysLive()
+    {
+        var gta6Item = MakeChannel("youtube:@bukancaitlyn", "Caitlyn Momochi", "live") with
+        {
+            StreamTitle = "GTA 6 early gameplay"
+        };
+        var plainLiveItem = MakeChannel("twitch:ironmouse", "ironmouse", "live") with
+        {
+            StreamTitle = "Just chatting"
+        };
+        var bridge = new StubCoreCliBridge
+        {
+            OnGetState = _ => Task.FromResult(MakeOkResponse(live: [gta6Item, plainLiveItem]))
+        };
+        using var coordinator = new StreamMonitorCoordinator(bridge, new FakeToastDispatcher(), TimeSpan.FromMinutes(3));
+        var vm = new PopoverViewModel(coordinator);
+
+        await coordinator.InitializeAsync();
+
+        Assert.Equal("gta6", vm.LiveHeaderVisualKind);
+        Assert.Equal("live", vm.LiveChannels[1].EffectiveVisualKind);
+    }
+
+    [Fact]
+    public async Task CelebrationOnly_HeaderKindIsCelebration()
+    {
+        var celebratingItem = MakeChannel("youtube:@bukancaitlyn", "Caitlyn Momochi", "live") with
+        {
+            StreamTitle = "birthday stream",
+            IsCelebration = true,
+            CelebrationType = "birthday"
+        };
+        var bridge = new StubCoreCliBridge
+        {
+            OnGetState = _ => Task.FromResult(MakeOkResponse(live: [celebratingItem]))
+        };
+        using var coordinator = new StreamMonitorCoordinator(bridge, new FakeToastDispatcher(), TimeSpan.FromMinutes(3));
+        var vm = new PopoverViewModel(coordinator);
+
+        await coordinator.InitializeAsync();
+
+        Assert.False(vm.IsLiveSectionGta6);
+        Assert.Equal("celebration", vm.LiveHeaderVisualKind);
+    }
+
+    [Fact]
+    public async Task NoGta6_HeaderKindIsLive_AndCelebratingFollowsCore()
+    {
+        var plainLiveItem = MakeChannel("youtube:@bukancaitlyn", "Caitlyn Momochi", "live") with
+        {
+            StreamTitle = "Chill art stream"
+        };
+        var bridge = new StubCoreCliBridge
+        {
+            OnGetState = _ => Task.FromResult(MakeOkResponse(live: [plainLiveItem]))
+        };
+        using var coordinator = new StreamMonitorCoordinator(bridge, new FakeToastDispatcher(), TimeSpan.FromMinutes(3));
+        var vm = new PopoverViewModel(coordinator);
+
+        await coordinator.InitializeAsync();
+
+        Assert.Equal("live", vm.LiveHeaderVisualKind);
+        Assert.False(vm.IsPopoverCelebrating);
+    }
+
+    [Fact]
+    public async Task Gta6StreamEnds_HeaderRevertsAndRaisesChange()
+    {
+        var gta6Item = MakeChannel("youtube:@bukancaitlyn", "Caitlyn Momochi", "live") with
+        {
+            StreamTitle = "GTA 6 early gameplay"
+        };
+        var plainLiveItem = MakeChannel("youtube:@bukancaitlyn", "Caitlyn Momochi", "live") with
+        {
+            StreamTitle = "Chill stream"
+        };
+        var bridge = new StubCoreCliBridge
+        {
+            OnGetState = _ => Task.FromResult(MakeOkResponse(live: [gta6Item])),
+            OnRefresh = _ => Task.FromResult(MakeOkResponse(live: [plainLiveItem]))
+        };
+        using var coordinator = new StreamMonitorCoordinator(bridge, new FakeToastDispatcher(), TimeSpan.FromMinutes(3));
+        var vm = new PopoverViewModel(coordinator);
+
+        await coordinator.InitializeAsync();
+
+        var changedProperties = new List<string?>();
+        vm.PropertyChanged += (_, e) => changedProperties.Add(e.PropertyName);
+
+        await coordinator.RefreshAllAsync();
+
+        Assert.Equal("live", vm.LiveHeaderVisualKind);
+        Assert.False(vm.IsLiveSectionGta6);
+        Assert.Contains(nameof(PopoverViewModel.LiveHeaderVisualKind), changedProperties);
+        Assert.Contains(nameof(PopoverViewModel.IsLiveSectionGta6), changedProperties);
+        Assert.Contains(nameof(PopoverViewModel.IsPopoverCelebrating), changedProperties);
+    }
+
+    [Fact]
     public async Task SettingsViewModel_CheckForUpdatesManually_WhenPrivateRepo404_SendsTestToastAndOpensPreview()
     {
         var bridge = new StubCoreCliBridge

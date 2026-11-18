@@ -100,7 +100,7 @@ public sealed class PopoverViewModel : INotifyPropertyChanged
 
     public string LiveCountBadgeText => $"{LiveCount} LIVE";
 
-    public bool IsPopoverCelebrating => _coordinator.CurrentState.IsPopoverCelebrating;
+    public bool IsPopoverCelebrating => _coordinator.CurrentState.IsPopoverCelebrating || IsLiveSectionGta6;
 
     public bool ReduceMotion => _coordinator.CurrentState.Settings.ReduceMotion;
 
@@ -115,6 +115,14 @@ public sealed class PopoverViewModel : INotifyPropertyChanged
     public bool HasUpcomingSection => UpcomingChannels.Count > 0;
 
     public bool HasOfflineSection => OfflineChannels.Count > 0;
+
+    public bool IsLiveSectionGta6 => LiveChannels.Any(c => c.IsGta6Live);
+
+    public string LiveHeaderVisualKind => IsLiveSectionGta6
+        ? "gta6"
+        : IsLiveSectionCelebrating
+            ? "celebration"
+            : "live";
 
     public bool IsLiveSectionCelebrating => LiveChannels.Any(c => c.IsCelebration);
 
@@ -207,6 +215,8 @@ public sealed class PopoverViewModel : INotifyPropertyChanged
         RaisePropertyChanged(nameof(HasLiveSection));
         RaisePropertyChanged(nameof(HasUpcomingSection));
         RaisePropertyChanged(nameof(HasOfflineSection));
+        RaisePropertyChanged(nameof(IsLiveSectionGta6));
+        RaisePropertyChanged(nameof(LiveHeaderVisualKind));
         RaisePropertyChanged(nameof(IsLiveSectionCelebrating));
         RaisePropertyChanged(nameof(IsUpcomingSectionCelebrating));
         RaisePropertyChanged(nameof(LiveSectionHeader));
