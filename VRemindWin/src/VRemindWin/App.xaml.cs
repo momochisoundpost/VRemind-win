@@ -70,6 +70,7 @@ public partial class App : Application
         _trayIconService = new TrayIconService(
             normalIconPath: Path.Combine(assetsDir, "tray-normal.ico"),
             liveIconPath: Path.Combine(assetsDir, "tray-live.ico"),
+            gta6IconPath: Path.Combine(assetsDir, "tray-gta6.ico"),
             onTogglePopover: TogglePopoverFromTray,
             onRefresh: () => _ = RefreshSafelyAsync(_coordinator),
             onOpenSettings: OpenSettingsWindow,
@@ -151,7 +152,7 @@ public partial class App : Application
             return;
         }
 
-        _trayIconService.SetLiveState(_coordinator.CurrentState.LiveCount > 0);
+        _trayIconService.SetTrayState(TrayVisualStatePolicy.Resolve(_coordinator.CurrentState));
     }
 
     private void TogglePopoverFromTray()

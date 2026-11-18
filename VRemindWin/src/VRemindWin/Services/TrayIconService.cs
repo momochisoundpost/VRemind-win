@@ -59,13 +59,15 @@ public sealed class TrayIconService : IDisposable
     private IntPtr _hwnd;
     private IntPtr _normalIcon;
     private IntPtr _liveIcon;
-    private bool _isLive;
+    private IntPtr _gta6Icon;
+    private TrayVisualState _state = TrayVisualState.Normal;
     private bool _disposed;
     private bool _iconAdded;
 
     public TrayIconService(
         string normalIconPath,
         string liveIconPath,
+        string gta6IconPath,
         Action onTogglePopover,
         Action onRefresh,
         Action onOpenSettings,
@@ -84,19 +86,20 @@ public sealed class TrayIconService : IDisposable
         int cy = Math.Max(16, GetSystemMetrics(SM_CYSMICON));
         _normalIcon = LoadImageW(IntPtr.Zero, normalIconPath, IMAGE_ICON, cx, cy, LR_LOADFROMFILE);
         _liveIcon = LoadImageW(IntPtr.Zero, liveIconPath, IMAGE_ICON, cx, cy, LR_LOADFROMFILE);
+        _gta6Icon = LoadImageW(IntPtr.Zero, gta6IconPath, IMAGE_ICON, cx, cy, LR_LOADFROMFILE);
 
         CreateMessageWindow();
         AddOrUpdateIcon(isAdd: true);
     }
 
-    public void SetLiveState(bool isLive)
+    public void SetTrayState(TrayVisualState state)
     {
         if (_disposed || _hwnd == IntPtr.Zero)
         {
             return;
         }
 
-        _isLive = isLive;
+        _state = state;
         AddOrUpdateIcon(isAdd: !_iconAdded);
     }
 
@@ -186,6 +189,13 @@ public sealed class TrayIconService : IDisposable
             return;
         }
 
+        IntPtr selectedIcon = _state switch
+        {
+            TrayVisualState.Gta6Live when _gta6Icon != IntPtr.Zero => _gta6Icon,
+            TrayVisualState.Gta6Live or TrayVisualState.Live when _liveIcon != IntPtr.Zero => _liveIcon,
+            _ => _normalIcon
+        };
+
         var nid = new NOTIFYICONDATAW
         {
             cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATAW>(),
@@ -193,8 +203,8 @@ public sealed class TrayIconService : IDisposable
             uID = TrayIconId,
             uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP,
             uCallbackMessage = WM_TRAYICON,
-            hIcon = _isLive && _liveIcon != IntPtr.Zero ? _liveIcon : _normalIcon,
-            szTip = _isLive ? "VRemind (Live now)" : "VRemind",
+            hIcon = selectedIcon,
+            szTip = TrayVisualStatePolicy.TooltipFor(_state),
             szInfo = string.Empty,
             szInfoTitle = string.Empty
         };
@@ -328,6 +338,12 @@ public sealed class TrayIconService : IDisposable
         {
             _ = DestroyIcon(_liveIcon);
             _liveIcon = IntPtr.Zero;
+        }
+
+        if (_gta6Icon != IntPtr.Zero)
+        {
+            _ = DestroyIcon(_gta6Icon);
+            _gta6Icon = IntPtr.Zero;
         }
     }
 
